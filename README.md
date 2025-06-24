@@ -15,7 +15,10 @@ A SwiftUI-based iOS application for simulating dice rolls for tabletop role-play
 
 ## Screenshots
 
-*Screenshots will be added here*
+<div align="center">
+  <img src="assets/main-screenshot.png" width="300" alt="Main Screen with Dice Roll Results">
+  <img src="assets/roll-history-screenshot.png" width="300" alt="Roll History Screen">
+</div>
 
 ## Requirements
 
