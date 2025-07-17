@@ -1,0 +1,39 @@
+title: Dice Roller Simulator
+description: >- 
+  Professional iOS dice rolling simulator app with enterprise-grade
+  features and polished user experience.
+
+baseurl: "/DiceRollerSimulator"
+url: "https://tiation.github.io"
+
+theme: minima
+
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+markdown: kramdown
+highlighter: rouge
+
+# Build settings
+kramdown:
+  syntax_highlighter_opts:
+    css_class: 'highlight'
+    span:
+      line_numbers: false
+    block:
+      line_numbers: true
+
+# Exclude from processing
+exclude:
+  - .sass-cache/
+  - .jekyll-cache/
+  - gemfiles/
+  - Gemfile
+  - Gemfile.lock
+  - node_modules/
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
