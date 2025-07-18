@@ -1,0 +1,174 @@
+{
+  "$schema": "https://surge.sh/schema.json",
+  "domain": "tiation-dice-roller.surge.sh",
+  "name": "tiation-dice-roller",
+  "version": "1.0.0",
+  "description": "Advanced dice rolling simulator with 3D graphics and statistical analysis",
+  "repository": "https://github.com/tiation/DiceRollerSimulator",
+  "author": "tiatheone@protonmail.com",
+  "license": "MIT",
+  "cors": true,
+  "https": true,
+  "http2": true,
+  "gzip": true,
+  "brotli": true,
+  "minify": {
+    "html": true,
+    "css": true,
+    "js": true
+  },
+  "environment": {
+    "NODE_ENV": "production",
+    "PLATFORM": "surge",
+    "DEPLOYMENT_TYPE": "enterprise",
+    "PROJECT_TYPE": "gaming-tool",
+    "FEATURES": "3d-graphics,statistics,dark-theme,real-time"
+  },
+  "rewrites": [
+    {
+      "source": "/api/rolls/**",
+      "destination": "/api/rolls/index.html",
+      "condition": "!file"
+    },
+    {
+      "source": "/api/stats/**",
+      "destination": "/api/stats/index.html",
+      "condition": "!file"
+    },
+    {
+      "source": "/api/history/**",
+      "destination": "/api/history/index.html",
+      "condition": "!file"
+    },
+    {
+      "source": "/admin/**",
+      "destination": "/admin/index.html",
+      "condition": "!file"
+    },
+    {
+      "source": "/*",
+      "destination": "/index.html",
+      "condition": "!file"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/old-site",
+      "destination": "/",
+      "type": 301
+    },
+    {
+      "source": "/feed",
+      "destination": "/api/rss.xml",
+      "type": 302
+    }
+  ],
+  "headers": {
+    "/**": {
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Content-Type-Options": "nosniff",
+      "X-Frame-Options": "SAMEORIGIN",
+      "X-XSS-Protection": "1; mode=block",
+      "X-DNS-Prefetch-Control": "on",
+      "X-Robots-Tag": "index, follow",
+      "Referrer-Policy": "strict-origin-when-cross-origin",
+      "Feature-Policy": "geolocation 'none'; microphone 'none'; camera 'none'; payment 'none'; usb 'none'",
+      "Permissions-Policy": "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()",
+      "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: https: blob:; media-src 'self' https: blob:; object-src 'none'; frame-src 'self' https://www.youtube.com https://player.vimeo.com; connect-src 'self' https: wss: ws:; worker-src 'self' blob:; manifest-src 'self'; base-uri 'self'; form-action 'self'; worker-src blob: https://cdn.tiation.com;",
+      "Cache-Control": "public, max-age=1800, s-maxage=3600, stale-while-revalidate=86400",
+      "Vary": "Accept-Encoding, Accept",
+      "X-Powered-By": "Tiation Enterprise Platform",
+      "X-Deployment-Version": "1.0.0",
+      "X-Environment": "production",
+      "X-Project-Type": "gaming-tool",
+      "X-Features": "3d-graphics,statistics,dark-theme,real-time"
+    },
+    "/api/**": {
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "Content-Type": "application/json; charset=utf-8",
+      "Access-Control-Allow-Origin": "https://tiation-dice-roller.surge.sh",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+      "Access-Control-Max-Age": "86400"
+    },
+    "/static/**": {
+      "Cache-Control": "public, max-age=31536000, immutable",
+      "Access-Control-Allow-Origin": "*"
+    },
+    "/assets/**": {
+      "Cache-Control": "public, max-age=31536000, immutable",
+      "Access-Control-Allow-Origin": "*",
+      "Cross-Origin-Resource-Policy": "cross-origin"
+    },
+    "/*.css": {
+      "Cache-Control": "public, max-age=31536000, immutable",
+      "Content-Type": "text/css; charset=utf-8"
+    },
+    "/*.js": {
+      "Cache-Control": "public, max-age=31536000, immutable",
+      "Content-Type": "application/javascript; charset=utf-8"
+    },
+    "/*.woff2": {
+      "Cache-Control": "public, max-age=31536000, immutable",
+      "Content-Type": "font/woff2",
+      "Access-Control-Allow-Origin": "*"
+    },
+    "/*.woff": {
+      "Cache-Control": "public, max-age=31536000, immutable",
+      "Content-Type": "font/woff",
+      "Access-Control-Allow-Origin": "*"
+    },
+    "/*.webp": {
+      "Cache-Control": "public, max-age=31536000, immutable",
+      "Content-Type": "image/webp"
+    },
+    "/*.webm": {
+      "Cache-Control": "public, max-age=31536000, immutable",
+      "Content-Type": "video/webm"
+    },
+    "/sitemap.xml": {
+      "Cache-Control": "public, max-age=86400",
+      "Content-Type": "application/xml; charset=utf-8"
+    },
+    "/robots.txt": {
+      "Cache-Control": "public, max-age=86400",
+      "Content-Type": "text/plain; charset=utf-8"
+    },
+    "/manifest.json": {
+      "Cache-Control": "public, max-age=86400",
+      "Content-Type": "application/manifest+json; charset=utf-8"
+    },
+    "/sw.js": {
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "Content-Type": "application/javascript; charset=utf-8"
+    }
+  },
+  "cleanUrls": true,
+  "trailing_slash": false,
+  "custom_404": "404.html",
+  "custom_500": "500.html",
+  "performance": {
+    "preload": [
+      "/assets/fonts/inter.woff2",
+      "/assets/css/critical.css"
+    ],
+    "prefetch": [
+      "/assets/js/main.js",
+      "/assets/css/main.css"
+    ]
+  },
+  "seo": {
+    "canonical": "https://tiation-dice-roller.surge.sh",
+    "robots": "index,follow",
+    "sitemap": "/sitemap.xml"
+  },
+  "analytics": {
+    "provider": "custom",
+    "tracking_id": "TIATION_ANALYTICS"
+  },
+  "monitoring": {
+    "uptime": true,
+    "performance": true,
+    "security": true
+  }
+}
