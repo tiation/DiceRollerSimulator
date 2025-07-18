@@ -36,7 +36,7 @@ The DiceRollerSimulator is an advanced iOS application designed for the Apple Ap
 ## Architecture
 The app follows Apple's recommended Model-View-Controller (MVC) architecture with SwiftUI integration, ensuring optimal performance and App Store compliance. The architecture is designed for scalability and maintainability.
 
-![Architecture Diagram](images/architecture.png)
+![Architecture Diagram](images/architecture.svg)
 
 ## Features
 ### Core Features
@@ -61,13 +61,13 @@ The app follows Apple's recommended Model-View-Controller (MVC) architecture wit
 App Store optimized screenshots showcasing the app's features:
 
 ### iPhone Screenshots
-- ![iPhone Main Screen](images/iphone-main-screen.png)
-- ![iPhone Roll History](images/iphone-roll-history.png)
-- ![iPhone Settings](images/iphone-settings.png)
+- ![iPhone Main Screen](images/iphone-main-screen.svg)
+- ![iPhone Roll History](images/iphone-roll-history.svg)
+- ![iPhone Settings](images/iphone-settings.svg)
 
 ### iPad Screenshots
-- ![iPad Main Screen](images/ipad-main-screen.png)
-- ![iPad Split View](images/ipad-split-view.png)
+- ![iPad Main Screen](images/ipad-main-screen.svg)
+- ![iPad Split View](images/ipad-split-view.svg)
 
 ## App Store Optimization (ASO)
 ### Keywords
@@ -107,7 +107,7 @@ The app integrates with Apple's App Store Connect API for automated builds and r
 ### App Store (Recommended)
 Download directly from the App Store:
 
-[![Download on the App Store](images/app-store-badge.png)](https://apps.apple.com/app/dice-roller-simulator/id123456789)
+[![Download on the App Store](images/app-store-badge.svg)](https://apps.apple.com/app/dice-roller-simulator/id123456789)
 
 ### TestFlight (Beta)
 Join our TestFlight beta program:
