@@ -25,6 +25,9 @@ struct ContentView: View {
     @State private var showCustomDiceAlert = false
     @State private var isSpinningDie = false
     @State private var spinAngle: Double = 0
+    @State private var showingStore = false
+    @StateObject private var paymentManager = PaymentManager()
+    @StateObject private var analyticsManager = AnalyticsManager()
     
     let availableDice = [4, 6, 8, 10, 12, 20, 100]
     
@@ -299,8 +302,20 @@ struct ContentView: View {
                 }
             }
             .navigationTitle("D&D Dice Roller")
+            .navigationBarItems(
+                trailing: Button(action: {
+                    showingStore = true
+                }) {
+                    Image(systemName: "bag.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(.blue)
+                }
+            )
             .sheet(isPresented: $showingHistorySheet) {
                 RollHistoryView(rolls: rollResults)
+            }
+            .sheet(isPresented: $showingStore) {
+                StoreView()
             }
         }
     }
@@ -328,6 +343,15 @@ struct ContentView: View {
             
             rollResults.insert(newRoll, at: 0)
             isRolling = false
+            
+            // Track dice roll analytics
+            Task {
+                await analyticsManager.trackDiceRoll(
+                    diceType: "d\(selectedDiceType)",
+                    result: results,
+                    timestamp: Date()
+                )
+            }
         }
     }
 }

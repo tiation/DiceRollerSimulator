@@ -3,7 +3,7 @@
     "app_info": {
       "name": "DiceRollerSimulator",
       "subtitle": "Advanced dice simulator for tabletop gaming",
-      "bundle_id": "com.yourcompany.DiceRollerSimulator",
+      "bundle_id": "com.tiation.DiceRollerSimulator",
       "sku": "DICE_ROLLER_SIM_001",
       "primary_category": "Games",
       "secondary_category": "Utilities",
@@ -18,7 +18,7 @@
       "minimum_os_version": "13.0"
     },
     "review_info": {
-      "contact_email": "support@dicerollersimulator.com",
+      "contact_email": "tiatheone@protonmail.com",
       "contact_phone": "+1-555-0123",
       "review_notes": "This app is a dice rolling simulator for tabletop gaming. No account creation required. All features are available without login."
     },
