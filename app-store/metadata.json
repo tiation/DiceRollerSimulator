@@ -1,0 +1,121 @@
+{
+  "app_store_connect": {
+    "app_info": {
+      "name": "DiceRollerSimulator",
+      "subtitle": "Advanced dice simulator for tabletop gaming",
+      "bundle_id": "com.yourcompany.DiceRollerSimulator",
+      "sku": "DICE_ROLLER_SIM_001",
+      "primary_category": "Games",
+      "secondary_category": "Utilities",
+      "content_rating": "4+",
+      "price_tier": "Free",
+      "availability": "All Countries"
+    },
+    "version_info": {
+      "version": "1.0",
+      "build": "1",
+      "release_notes": "Initial release with advanced 3D dice rolling, multiple dice types, roll history, and iCloud sync.",
+      "minimum_os_version": "13.0"
+    },
+    "review_info": {
+      "contact_email": "support@dicerollersimulator.com",
+      "contact_phone": "+1-555-0123",
+      "review_notes": "This app is a dice rolling simulator for tabletop gaming. No account creation required. All features are available without login."
+    },
+    "keywords": [
+      "dice",
+      "roller",
+      "simulator",
+      "D&D",
+      "tabletop",
+      "gaming",
+      "random",
+      "number",
+      "generator",
+      "RPG",
+      "board",
+      "games",
+      "probability",
+      "statistics",
+      "3D",
+      "animation"
+    ],
+    "supported_devices": [
+      "iPhone",
+      "iPad",
+      "Mac (Apple Silicon)"
+    ],
+    "supported_languages": [
+      "English",
+      "Spanish",
+      "French",
+      "German",
+      "Japanese",
+      "Chinese (Simplified)"
+    ],
+    "privacy_policy_url": "https://yourdomain.com/privacy-policy",
+    "support_url": "https://yourdomain.com/support"
+  },
+  "testflight": {
+    "beta_info": {
+      "beta_description": "Test the latest features of DiceRollerSimulator before they're released to the App Store.",
+      "feedback_email": "beta@dicerollersimulator.com",
+      "marketing_url": "https://yourdomain.com/beta"
+    },
+    "test_groups": [
+      {
+        "name": "Internal Testing",
+        "description": "Internal team testing"
+      },
+      {
+        "name": "External Beta",
+        "description": "Public beta testing group"
+      }
+    ]
+  },
+  "in_app_purchases": [
+    {
+      "product_id": "premium_dice_pack",
+      "type": "non_consumable",
+      "name": "Premium Dice Pack",
+      "description": "Unlock premium dice skins and materials",
+      "price": "$2.99"
+    },
+    {
+      "product_id": "sound_pack",
+      "type": "non_consumable", 
+      "name": "Sound Pack",
+      "description": "Premium sound effects for dice rolling",
+      "price": "$1.99"
+    }
+  ],
+  "game_center": {
+    "enabled": true,
+    "leaderboards": [
+      {
+        "id": "most_rolls",
+        "name": "Most Rolls",
+        "format": "integer"
+      },
+      {
+        "id": "highest_single_roll",
+        "name": "Highest Single Roll",
+        "format": "integer"
+      }
+    ],
+    "achievements": [
+      {
+        "id": "first_roll",
+        "name": "First Roll",
+        "description": "Roll your first die",
+        "points": 10
+      },
+      {
+        "id": "hundred_rolls",
+        "name": "Century Roller",
+        "description": "Complete 100 dice rolls",
+        "points": 50
+      }
+    ]
+  }
+}

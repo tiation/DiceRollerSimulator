@@ -1,0 +1,51 @@
+# GitHub Pages Configuration for DiceRollerSimulator
+title: DiceRollerSimulator iOS App
+description: Advanced iOS application for simulating dice rolls with customizable settings and visualization
+url: "https://yourusername.github.io"
+baseurl: "/DiceRollerSimulator"
+
+# Theme
+theme: minima
+
+# Navigation
+header_pages:
+  - index.md
+  - architecture.md
+  - installation.md
+  - contributing.md
+
+# SEO
+author:
+  name: Your Name
+  email: your.email@example.com
+
+# Social
+twitter_username: yourusername
+github_username: yourusername
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# Exclude
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
+  - .DS_Store
+  - "*.xcodeproj"
+  - "*.xcworkspace"
+  - "*.pbxproj"
