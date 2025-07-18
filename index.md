@@ -1,48 +1,29 @@
 ---
 layout: default
-title: Dice Roller Simulator
+title: DiceRollerSimulator
 ---
 
-# Dice Roller Simulator
+# DiceRollerSimulator
 
-Professional iOS dice rolling simulator app with enterprise-grade features and polished user experience.
+Enterprise-grade solution with dark neon theme and professional documentation.
 
 ## Features
 
-- **Professional Design**: Clean, modern interface with intuitive controls
-- **Multiple Dice Types**: Support for various dice configurations
-- **Advanced Rolling**: Sophisticated rolling algorithms and animations
-- **Enterprise Ready**: Professional-grade code architecture
-- **iOS Optimized**: Native iOS app with smooth performance
+- 🎯 **Enterprise Grade**: Professional-grade solution built with enterprise standards
+- 🎨 **Dark Neon Theme**: Beautiful dark theme with cyan/magenta gradient accents
+- 🔒 **Secure**: Built-in security features and compliance standards
+- 📱 **Responsive**: Optimized for all devices and screen sizes
 
-## Screenshots
+## Links
 
-![App Screenshot](screenshots/main-screen.png)
+- [Repository](https://github.com/tiaastor/DiceRollerSimulator)
+- [Issues](https://github.com/tiaastor/DiceRollerSimulator/issues)
+- [Documentation](https://github.com/tiaastor/DiceRollerSimulator/wiki)
 
-## Technical Details
+## Contact
 
-- **Platform**: iOS (Swift)
-- **Architecture**: MVVM with modern iOS patterns
-- **Features**: Core Animation, UIKit, SwiftUI compatibility
-- **Testing**: Comprehensive unit and UI test coverage
-
-## Installation
-
-1. Clone the repository
-2. Open `DiceRollerSimulator.xcodeproj` in Xcode
-3. Build and run on iOS device or simulator
-
-## Documentation
-
-For detailed development documentation, see the [README](README.md).
-
-## Enterprise Features
-
-- **Clean Architecture**: Professional code organization
-- **Comprehensive Testing**: Full test coverage
-- **Documentation**: Complete technical documentation
-- **CI/CD Ready**: GitHub Actions integration
+For support: [tiatheone@protonmail.com](mailto:tiatheone@protonmail.com)
 
 ---
 
-*Professional iOS app development by Tiation*
+Built with ❤️ and enterprise-grade standards by [Tiation](https://github.com/tiaastor)
