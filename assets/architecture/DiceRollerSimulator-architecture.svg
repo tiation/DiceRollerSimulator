@@ -1,0 +1,208 @@
+<svg width="1000" height="700" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <style>
+            .component {
+                font-family: 'Courier New', monospace;
+                font-size: 14px;
+                font-weight: bold;
+                text-anchor: middle;
+                dominant-baseline: middle;
+            }
+            .component-desc {
+                font-family: 'Courier New', monospace;
+                font-size: 11px;
+                font-weight: normal;
+                text-anchor: middle;
+                dominant-baseline: middle;
+            }
+            .title {
+                font-family: 'Courier New', monospace;
+                font-size: 24px;
+                font-weight: bold;
+                text-anchor: middle;
+                fill: #00FFFF;
+                filter: drop-shadow(0 0 10px #00FFFF);
+            }
+            .subtitle {
+                font-family: 'Courier New', monospace;
+                font-size: 14px;
+                font-weight: normal;
+                text-anchor: middle;
+                fill: #FFFFFF;
+                opacity: 0.8;
+            }
+            .connection {
+                stroke: #00FF88;
+                stroke-width: 2;
+                stroke-opacity: 0.7;
+                marker-end: url(#arrowhead);
+                filter: drop-shadow(0 0 3px #00FF88);
+            }
+            .glow {
+                filter: drop-shadow(0 0 8px currentColor);
+            }
+            .component-box {
+                filter: drop-shadow(0 0 10px currentColor);
+            }
+        </style>
+        <marker id="arrowhead" markerWidth="12" markerHeight="10" 
+                refX="10" refY="5" orient="auto">
+            <polygon points="0 0, 12 5, 0 10" fill="#00FF88" />
+        </marker>
+        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#0A0A0A;stop-opacity:1" />
+            <stop offset="30%" style="stop-color:#1A1A2E;stop-opacity:1" />
+            <stop offset="70%" style="stop-color:#16213E;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#0A0A0A;stop-opacity:1" />
+        </linearGradient>
+        <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" style="stop-color:#00FFFF;stop-opacity:0.1" />
+            <stop offset="100%" style="stop-color:#FF00FF;stop-opacity:0.05" />
+        </radialGradient>
+    </defs>
+    
+    <!-- Background -->
+    <rect width="1000" height="700" fill="url(#bg)" />
+    <rect width="1000" height="700" fill="url(#centerGlow)" />
+    
+    <!-- Title -->
+    <text x="500.0" y="40" class="title">Dice Roller Simulator Architecture</text>
+    <text x="500.0" y="65" class="subtitle">🔮 Tiation Ecosystem • Enterprise Architecture</text>
+    
+    <!-- Grid lines for visual structure -->
+    <defs>
+        <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+            <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#00FFFF" stroke-width="0.5" opacity="0.1"/>
+        </pattern>
+    </defs>
+    <rect width="1000" height="700" fill="url(#grid)" />
+    
+    <!-- Connections -->
+    <path d="M 191.66666666666666 245.0 Q 338.3333333333333 225.0 485.0 245.0" 
+                  class="connection" fill="none" />
+    <path d="M 485.0 245.0 Q 631.6666666666666 225.0 778.3333333333333 245.0" 
+                  class="connection" fill="none" />
+    <path d="M 778.3333333333333 245.0 Q 484.99999999999994 345.0 191.66666666666666 485.0" 
+                  class="connection" fill="none" />
+    <path d="M 191.66666666666666 245.0 Q 191.66666666666666 345.0 191.66666666666666 485.0" 
+                  class="connection" fill="none" />
+    <path d="M 191.66666666666666 245.0 Q 338.3333333333333 345.0 485.0 485.0" 
+                  class="connection" fill="none" />
+    <path d="M 191.66666666666666 245.0 Q 484.99999999999994 345.0 778.3333333333333 485.0" 
+                  class="connection" fill="none" />
+    <path d="M 485.0 245.0 Q 631.6666666666666 345.0 778.3333333333333 485.0" 
+                  class="connection" fill="none" />
+    
+    <!-- Web Interface -->
+    <g class="component-box">
+        <rect x="86.33333333333333" y="182.0" 
+              width="210.66666666666666" height="126.0" 
+              fill="#00FFFF" fill-opacity="0.15" 
+              stroke="#00FFFF" stroke-width="2" 
+              rx="15" ry="15" />
+        <rect x="88.33333333333333" y="184.0" 
+              width="206.66666666666666" height="122.0" 
+              fill="none" 
+              stroke="#00FFFF" stroke-width="1" stroke-opacity="0.3"
+              rx="13" ry="13" />
+        <text x="191.66666666666666" y="237.0" class="component" fill="#00FFFF">Web Interface</text>
+        <text x="191.66666666666666" y="257.0" class="component-desc" fill="#FFFFFF" opacity="0.8">HTML5/CSS3/JS UI</text>
+    </g>
+    
+    <!-- Dice Engine -->
+    <g class="component-box">
+        <rect x="379.6666666666667" y="182.0" 
+              width="210.66666666666666" height="126.0" 
+              fill="#FF00FF" fill-opacity="0.15" 
+              stroke="#FF00FF" stroke-width="2" 
+              rx="15" ry="15" />
+        <rect x="381.6666666666667" y="184.0" 
+              width="206.66666666666666" height="122.0" 
+              fill="none" 
+              stroke="#FF00FF" stroke-width="1" stroke-opacity="0.3"
+              rx="13" ry="13" />
+        <text x="485.0" y="237.0" class="component" fill="#FF00FF">Dice Engine</text>
+        <text x="485.0" y="257.0" class="component-desc" fill="#FFFFFF" opacity="0.8">Random Number Generator</text>
+    </g>
+    
+    <!-- Game Logic -->
+    <g class="component-box">
+        <rect x="672.9999999999999" y="182.0" 
+              width="210.66666666666666" height="126.0" 
+              fill="#00FF88" fill-opacity="0.15" 
+              stroke="#00FF88" stroke-width="2" 
+              rx="15" ry="15" />
+        <rect x="674.9999999999999" y="184.0" 
+              width="206.66666666666666" height="122.0" 
+              fill="none" 
+              stroke="#00FF88" stroke-width="1" stroke-opacity="0.3"
+              rx="13" ry="13" />
+        <text x="778.3333333333333" y="237.0" class="component" fill="#00FF88">Game Logic</text>
+        <text x="778.3333333333333" y="257.0" class="component-desc" fill="#FFFFFF" opacity="0.8">Rules & Mechanics</text>
+    </g>
+    
+    <!-- Statistics -->
+    <g class="component-box">
+        <rect x="86.33333333333333" y="422.0" 
+              width="210.66666666666666" height="126.0" 
+              fill="#FFD700" fill-opacity="0.15" 
+              stroke="#FFD700" stroke-width="2" 
+              rx="15" ry="15" />
+        <rect x="88.33333333333333" y="424.0" 
+              width="206.66666666666666" height="122.0" 
+              fill="none" 
+              stroke="#FFD700" stroke-width="1" stroke-opacity="0.3"
+              rx="13" ry="13" />
+        <text x="191.66666666666666" y="477.0" class="component" fill="#FFD700">Statistics</text>
+        <text x="191.66666666666666" y="497.0" class="component-desc" fill="#FFFFFF" opacity="0.8">Roll Analytics</text>
+    </g>
+    
+    <!-- Local Storage -->
+    <g class="component-box">
+        <rect x="379.6666666666667" y="422.0" 
+              width="210.66666666666666" height="126.0" 
+              fill="#FF4500" fill-opacity="0.15" 
+              stroke="#FF4500" stroke-width="2" 
+              rx="15" ry="15" />
+        <rect x="381.6666666666667" y="424.0" 
+              width="206.66666666666666" height="122.0" 
+              fill="none" 
+              stroke="#FF4500" stroke-width="1" stroke-opacity="0.3"
+              rx="13" ry="13" />
+        <text x="485.0" y="477.0" class="component" fill="#FF4500">Local Storage</text>
+        <text x="485.0" y="497.0" class="component-desc" fill="#FFFFFF" opacity="0.8">User Preferences</text>
+    </g>
+    
+    <!-- Animation -->
+    <g class="component-box">
+        <rect x="672.9999999999999" y="422.0" 
+              width="210.66666666666666" height="126.0" 
+              fill="#8A2BE2" fill-opacity="0.15" 
+              stroke="#8A2BE2" stroke-width="2" 
+              rx="15" ry="15" />
+        <rect x="674.9999999999999" y="424.0" 
+              width="206.66666666666666" height="122.0" 
+              fill="none" 
+              stroke="#8A2BE2" stroke-width="1" stroke-opacity="0.3"
+              rx="13" ry="13" />
+        <text x="778.3333333333333" y="477.0" class="component" fill="#8A2BE2">Animation</text>
+        <text x="778.3333333333333" y="497.0" class="component-desc" fill="#FFFFFF" opacity="0.8">Visual Effects</text>
+    </g>
+
+    <!-- Decorative corner elements -->
+    <circle cx="30" cy="30" r="3" fill="#00FFFF" opacity="0.5" />
+    <circle cx="970" cy="30" r="3" fill="#FF00FF" opacity="0.5" />
+    <circle cx="30" cy="670" r="3" fill="#00FF88" opacity="0.5" />
+    <circle cx="970" cy="670" r="3" fill="#FFD700" opacity="0.5" />
+    
+    <!-- Tiation branding -->
+    <text x="30" y="685" class="component-desc" fill="#00FFFF" text-anchor="start" opacity="0.7">
+        Built with 💜 by Tiation • Enterprise-grade Architecture
+    </text>
+    
+    <!-- Version info -->
+    <text x="970" y="685" class="component-desc" fill="#FFFFFF" text-anchor="end" opacity="0.5">
+        v1.0 • DiceRollerSimulator
+    </text>
+    
+</svg>
