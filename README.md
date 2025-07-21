@@ -1,116 +1,108 @@
-# DiceRollerSimulator
+# tiation-dice-roller-ios
 
-<div align="center">
+![CI/CD](https://github.com/tiation/tiation-dice-roller-ios/workflows/CI/badge.svg)
+![Security](https://github.com/tiation/tiation-dice-roller-ios/workflows/Security%20Scan/badge.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-![DiceRollerSimulator Banner](https://img.shields.io/badge/🔮_TIATION-DiceRollerSimulator-00FFFF?style=for-the-badge&labelColor=0A0A0A&color=00FFFF)
+Enterprise-grade application with automated CI/CD pipeline and multi-environment deployment.
 
-**🌟 DiceRollerSimulator - Enterprise Solution**
+## 🚀 Features
 
-*Professional • Scalable • Mission-Driven*
-
-[![⚡_Status](https://img.shields.io/badge/⚡_Status-Active_Development-FF00FF?style=flat-square&labelColor=0A0A0A&logo=github&logoColor=white)](https://github.com/tiation/DiceRollerSimulator)
-[![📄_License](https://img.shields.io/badge/📄_License-MIT-00FFFF?style=flat-square&labelColor=0A0A0A&logo=opensourceinitiative&logoColor=white)](https://github.com/tiation/DiceRollerSimulator/blob/main/LICENSE)
-
-</div>
-
-## 🚀 Overview
-
-**DiceRollerSimulator** is part of the Tiation enterprise ecosystem, delivering professional-grade solutions for modern business challenges.
-
-> 🎯 **Mission**: Provide scalable, enterprise-ready solutions through innovative technology and collaborative frameworks.
-
-### ✨ Key Features
-
-- 🎯 **Enterprise Grade** - Production-ready with comprehensive testing and monitoring
-- 🔧 **Scalable Architecture** - Built for growth and high-performance requirements  
-- 🌟 **Modern Technology** - Leveraging cutting-edge frameworks and best practices
-- 🛡️ **Security First** - Built with security and compliance as core priorities
-
----
+- **Enterprise CI/CD**: Automated testing, building, and deployment
+- **Security First**: Vulnerability scanning and security hardening  
+- **Multi-Environment**: Staging and production deployments
+- **Container-Ready**: Docker containerization with multi-arch builds
+- **Monitoring**: Integrated with Grafana and alerting systems
 
 ## 🏗️ Architecture
 
-```mermaid
-graph TB
-    A[Core Components] --> B[Business Logic]
-    B --> C[Integration Layer]
-    C --> D[Data Layer]
-    
-    style A fill:#00ffff,stroke:#ff00ff,stroke-width:3px
-    style B fill:#ff00ff,stroke:#00ffff,stroke-width:3px
-    style C fill:#00ff00,stroke:#ffff00,stroke-width:3px
-```
+- **Staging**: docker.tiation.net (145.223.22.9)
+- **Production**: docker.sxc.codes (145.223.22.7)
+- **Helm Charts**: helm.sxc.codes (145.223.21.248)
+- **Monitoring**: grafana.sxc.codes (153.92.214.1)
 
----
+## 📋 Development
 
-## 📦 Installation
+### Prerequisites
 
-### Quick Start
+- Node.js 18+
+- Docker
+- Git
+
+### Setup
 
 ```bash
-# Clone the repository
-git clone https://github.com/tiation/DiceRollerSimulator.git
-cd DiceRollerSimulator
-
-# Follow installation instructions
-# (See project-specific setup in the repository)
+git clone https://github.com/tiation/tiation-dice-roller-ios.git
+cd tiation-dice-roller-ios
+npm install
 ```
 
----
+### Running Locally
 
-## 🎯 Usage
+```bash
+npm run dev
+```
 
-This project is part of the larger Tiation ecosystem. Please refer to the project documentation for specific usage instructions and integration guidelines.
+### Testing
 
----
+```bash
+# Run all tests
+npm test
 
-## 📚 Documentation
+# Run linting
+npm run lint
 
-- **[Project Documentation](docs/)** - Complete project documentation
-- **[API Reference](docs/api.md)** - API documentation (if applicable)
-- **[Contributing Guide](CONTRIBUTING.md)** - How to contribute to this project
+# Run security checks
+./scripts/ci-cd/security-check.sh
+```
 
----
+## 🚢 Deployment
 
-## 🤝 Contributing
+### Automatic Deployments
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+- **Staging**: Triggered on push to `develop` branch
+- **Production**: Triggered on push to `main` branch
 
-### Development Setup
+### Manual Deployment
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+```bash
+# Build Docker image
+docker build -t tiation-dice-roller-ios .
 
----
+# Deploy to staging
+./scripts/deploy-staging.sh
 
-## 🔮 Tiation Ecosystem
+# Deploy to production  
+./scripts/deploy-production.sh
+```
 
-This repository is part of the Tiation ecosystem:
+## 🔒 Security
 
-- [🌟 Tiation Platform](https://github.com/tiation/tiation) - Main ecosystem platform
-- [🤖 AI Platform](https://github.com/tiation/tiation-ai-platform) - Enterprise AI platform
-- [🤖 AI Agents](https://github.com/tiation/tiation-ai-agents) - Intelligent automation
-- [⚡ Terminal Workflows](https://github.com/tiation/tiation-terminal-workflows) - Developer tools
-- [🐳 Docker Solutions](https://github.com/tiation/tiation-docker-debian) - Container orchestration
+This project follows enterprise security practices:
 
----
+- Automated vulnerability scanning with Trivy
+- Security-focused ESLint rules
+- Regular dependency audits
+- Non-root container execution
+- Secrets management via GitHub Secrets
+
+## 📊 Monitoring & Observability
+
+- **Logs**: Aggregated in ELK Stack (elastic.sxc.codes)
+- **Metrics**: Grafana dashboards (grafana.sxc.codes)
+- **Alerts**: Email and Slack notifications
+- **Health Checks**: Automated endpoint monitoring
+
+## 📬 Support & Contact
+
+- **Email**: tiatheone@protonmail.com, garrett@sxc.codes
+- **Issues**: GitHub Issues
+- **Documentation**: See `docs/` directory
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-<div align="center">
-  <p>
-    <strong>Built with ❤️ by the Tiation Team</strong>
-  </p>
-  <p>
-    <a href="https://github.com/tiation">
-      <img src="https://img.shields.io/badge/Powered%20by-Tiation-cyan.svg" alt="Powered by Tiation">
-    </a>
-  </p>
-</div>
+**Enterprise Infrastructure by Tiation** 🌟
