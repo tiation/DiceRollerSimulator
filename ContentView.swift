@@ -895,7 +895,7 @@ struct DungeonMasterView: View {
         for i in 1...25 {
             configs.append(CustomDiceConfig(
                 id: i,
-                name: "Custom Roll \(i)",
+                name: "Fate Roll \(i)",
                 diceType: .d20,
                 modifier: 0,
                 rollType: .normal
@@ -908,74 +908,200 @@ struct DungeonMasterView: View {
     @State private var lastRollResult = ""
     @State private var rollHistory: [String] = []
     @State private var showingHistory = false
+    @State private var showingRollAnimation = false
     
     var body: some View {
-        VStack {
-            // Header
-            Text("🧙‍♂️ Dungeon Master")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .foregroundColor(.white)
-                .padding(.top)
+        VStack(spacing: 0) {
+            // Lord of the Rings themed header
+            VStack(spacing: 8) {
+                Text("🧙‍♂️ Dungeon Master")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .foregroundStyle(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color.yellow, Color.orange]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .shadow(color: .black.opacity(0.3), radius: 2, x: 1, y: 1)
+                    .padding(.top)
+                
+                Text("✨ Weaver of Fates ✨")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.orange.opacity(0.9))
+                    .italic()
+                
+                Text("The power of Middle-earth flows through these dice")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+                    .padding(.bottom, 8)
+            }
+            .padding(.horizontal)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                Color.black.opacity(0.8),
+                                Color.purple.opacity(0.6),
+                                Color.black.opacity(0.8)
+                            ]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .shadow(color: .purple.opacity(0.3), radius: 8, x: 0, y: 4)
+            )
+            .padding(.horizontal)
+            .padding(.bottom)
             
-            Text("Custom Dice Configuration")
-                .font(.headline)
-                .foregroundColor(.gray)
-                .padding(.bottom)
-            
-            // Custom Dice List
+            // Custom Dice List with enhanced styling
             List {
                 ForEach($customDiceConfigs) { $config in
-                    CustomDiceRowView(config: $config) { result in
+                    DungeonMasterDiceRowView(config: $config) { result in
                         performRoll(for: config, result: result)
                     }
-                    .listRowBackground(Color.purple.opacity(0.2))
+                    .listRowBackground(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [
+                                        Color.purple.opacity(0.2),
+                                        Color.black.opacity(0.3)
+                                    ]),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.purple.opacity(0.3), lineWidth: 1)
+                            )
+                    )
+                    .listRowSeparator(.hidden)
+                    .padding(.vertical, 2)
                 }
             }
             .listStyle(PlainListStyle())
-            .background(Color.black)
+            .background(Color.clear)
+            .scrollContentBackground(.hidden)
             
-            // Roll History Button
+            // Enhanced Roll History Button
             Button(action: {
                 showingHistory = true
             }) {
-                HStack {
-                    Image(systemName: "clock.arrow.circlepath")
-                    Text("Roll History (\(rollHistory.count))")
+                HStack(spacing: 12) {
+                    Image(systemName: "scroll")
+                        .font(.system(size: 18))
+                    Text("Chronicle of Rolls")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                    Text("(\(rollHistory.count))")
+                        .font(.caption)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
+                        .background(Color.white.opacity(0.2))
+                        .cornerRadius(10)
                 }
                 .foregroundColor(.white)
-                .padding()
-                .background(Color.red.opacity(0.7))
-                .cornerRadius(10)
+                .padding(.vertical, 14)
+                .padding(.horizontal, 20)
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color.red.opacity(0.8),
+                            Color.orange.opacity(0.7),
+                            Color.red.opacity(0.8)
+                        ]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .cornerRadius(12)
+                .shadow(color: .red.opacity(0.4), radius: 6, x: 0, y: 3)
             }
+            .padding(.horizontal)
             .padding(.bottom)
         }
         .background(
             LinearGradient(
-                gradient: Gradient(colors: [Color.black, Color.purple.opacity(0.3)]),
-                startPoint: .top,
-                endPoint: .bottom
+                gradient: Gradient(colors: [
+                    Color.black,
+                    Color.purple.opacity(0.4),
+                    Color.black.opacity(0.8),
+                    Color.purple.opacity(0.2)
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
             )
         )
-        .alert("Roll Result", isPresented: $showingRollResult) {
-            Button("OK") { }
+        .alert("The Dice Have Spoken!", isPresented: $showingRollResult) {
+            Button("So it is written") { 
+                showingRollAnimation = false
+            }
         } message: {
             Text(lastRollResult)
+                .font(.headline)
         }
         .sheet(isPresented: $showingHistory) {
             DMHistoryView(rollHistory: rollHistory)
         }
+        .overlay(
+            // Roll animation overlay
+            showingRollAnimation ? 
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    VStack {
+                        Image(systemName: "dice.fill")
+                            .font(.system(size: 60))
+                            .foregroundColor(.yellow)
+                            .rotationEffect(.degrees(showingRollAnimation ? 360 : 0))
+                            .animation(
+                                .easeInOut(duration: 0.8).repeatCount(2, autoreverses: false),
+                                value: showingRollAnimation
+                            )
+                        Text("✨ Rolling... ✨")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                            .fontWeight(.bold)
+                    }
+                    .padding(30)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.black.opacity(0.8))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(Color.purple, lineWidth: 2)
+                            )
+                    )
+                    Spacer()
+                }
+                Spacer()
+            }
+            : nil
+        )
     }
     
     private func performRoll(for config: CustomDiceConfig, result: Int) {
-        let rollDescription = "\(config.name): \(result) (\(config.diceType.rawValue)\(config.modifier >= 0 ? "+" : "")\(config.modifier)))"
-        lastRollResult = rollDescription
-        showingRollResult = true
-        rollHistory.insert(rollDescription, at: 0)
+        showingRollAnimation = true
         
-        // Keep only last 50 rolls
-        if rollHistory.count > 50 {
-            rollHistory = Array(rollHistory.prefix(50))
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
+            let rollDescription = "⚔️ \(config.name): \(result) (\(config.diceType.rawValue)\(config.modifier >= 0 ? "+" : "")\(config.modifier))"
+            lastRollResult = rollDescription
+            showingRollAnimation = false
+            showingRollResult = true
+            rollHistory.insert(rollDescription, at: 0)
+            
+            // Keep only last 50 rolls
+            if rollHistory.count > 50 {
+                rollHistory = Array(rollHistory.prefix(50))
+            }
         }
     }
 }
@@ -986,6 +1112,326 @@ struct CustomDiceConfig: Identifiable {
     var diceType: DiceType
     var modifier: Int
     var rollType: RollType
+}
+
+struct DungeonMasterDiceRowView: View {
+    @Binding var config: CustomDiceConfig
+    let onRoll: (Int) -> Void
+    
+    @State private var isExpanded = false
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            // Enhanced Row Header with Name and Roll Button
+            HStack(spacing: 12) {
+                // Expand/Collapse Button with mystical styling
+                Button(action: {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        isExpanded.toggle()
+                    }
+                }) {
+                    Image(systemName: isExpanded ? "chevron.down.circle.fill" : "chevron.right.circle.fill")
+                        .foregroundStyle(
+                            LinearGradient(
+                                gradient: Gradient(colors: [Color.yellow, Color.orange]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .font(.system(size: 16))
+                        .shadow(color: .orange.opacity(0.5), radius: 2, x: 0, y: 1)
+                }
+                
+                // Enhanced Name field with Middle-earth styling
+                TextField("Fate Roll Name", text: $config.name)
+                    .textFieldStyle(PlainTextFieldStyle())
+                    .foregroundStyle(
+                        LinearGradient(
+                            gradient: Gradient(colors: [Color.white, Color.yellow.opacity(0.8)]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .font(.system(size: 16, weight: .semibold))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Color.black.opacity(0.3))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(Color.purple.opacity(0.4), lineWidth: 1)
+                            )
+                    )
+                
+                Spacer()
+                
+                // Enhanced Quick Info with rune-like styling
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("\(config.diceType.rawValue)")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(.orange)
+                    Text("\(config.modifier >= 0 ? "+" : "")\(config.modifier)")
+                        .font(.caption2)
+                        .foregroundColor(.gray)
+                }
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.black.opacity(0.5))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+                        )
+                )
+                
+                // Enhanced Roll Button with Ring of Power styling
+                Button(action: {
+                    let baseRoll = Int.random(in: 1...config.diceType.sides)
+                    let finalResult = baseRoll + config.modifier
+                    onRoll(finalResult)
+                }) {
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [
+                                        Color.yellow.opacity(0.8),
+                                        Color.orange.opacity(0.9),
+                                        Color.red.opacity(0.7)
+                                    ]),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 40, height: 40)
+                            .shadow(color: .orange.opacity(0.6), radius: 4, x: 0, y: 2)
+                        
+                        Image(systemName: "dice.fill")
+                            .foregroundColor(.white)
+                            .font(.system(size: 18, weight: .bold))
+                            .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
+                    }
+                }
+                .scaleEffect(isExpanded ? 1.1 : 1.0)
+                .animation(.easeInOut(duration: 0.2), value: isExpanded)
+            }
+            
+            // Enhanced Expanded Configuration Options
+            if isExpanded {
+                VStack(alignment: .leading, spacing: 16) {
+                    Divider()
+                        .background(
+                            LinearGradient(
+                                gradient: Gradient(colors: [Color.clear, Color.purple.opacity(0.5), Color.clear]),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(height: 1)
+                    
+                    // Enhanced Dice Type Selection
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Image(systemName: "die.face.1")
+                                .foregroundColor(.orange)
+                                .font(.system(size: 14))
+                            Text("Dice of Fate")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.orange)
+                        }
+                        
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 10) {
+                                ForEach(DiceType.allCases, id: \.self) { diceType in
+                                    Button(action: {
+                                        withAnimation(.easeInOut(duration: 0.2)) {
+                                            config.diceType = diceType
+                                        }
+                                    }) {
+                                        Text(diceType.rawValue)
+                                            .font(.system(size: 13, weight: .semibold))
+                                            .foregroundColor(config.diceType == diceType ? .black : .white)
+                                            .padding(.horizontal, 14)
+                                            .padding(.vertical, 8)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 16)
+                                                    .fill(
+                                                        config.diceType == diceType ?
+                                                        LinearGradient(
+                                                            gradient: Gradient(colors: [Color.yellow, Color.orange]),
+                                                            startPoint: .topLeading,
+                                                            endPoint: .bottomTrailing
+                                                        ) :
+                                                        LinearGradient(
+                                                            gradient: Gradient(colors: [Color.purple.opacity(0.3), Color.black.opacity(0.5)]),
+                                                            startPoint: .topLeading,
+                                                            endPoint: .bottomTrailing
+                                                        )
+                                                    )
+                                            )
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 16)
+                                                    .stroke(
+                                                        config.diceType == diceType ? Color.orange.opacity(0.8) : Color.purple.opacity(0.4),
+                                                        lineWidth: 1
+                                                    )
+                                            )
+                                            .shadow(
+                                                color: config.diceType == diceType ? .orange.opacity(0.4) : .clear,
+                                                radius: 3,
+                                                x: 0,
+                                                y: 2
+                                            )
+                                    }
+                                    .scaleEffect(config.diceType == diceType ? 1.05 : 1.0)
+                                    .animation(.easeInOut(duration: 0.2), value: config.diceType == diceType)
+                                }
+                            }
+                            .padding(.horizontal, 8)
+                        }
+                    }
+                    
+                    // Enhanced Modifier with ancient rune styling
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Image(systemName: "plus.forwardslash.minus")
+                                .foregroundColor(.orange)
+                                .font(.system(size: 14))
+                            Text("Power Modifier")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.orange)
+                        }
+                        
+                        HStack(spacing: 16) {
+                            Button(action: {
+                                if config.modifier > -10 {
+                                    withAnimation(.easeInOut(duration: 0.1)) {
+                                        config.modifier -= 1
+                                    }
+                                }
+                            }) {
+                                ZStack {
+                                    Circle()
+                                        .fill(
+                                            LinearGradient(
+                                                gradient: Gradient(colors: [Color.red.opacity(0.8), Color.orange.opacity(0.6)]),
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                        .frame(width: 32, height: 32)
+                                        .shadow(color: .red.opacity(0.4), radius: 2, x: 0, y: 1)
+                                    
+                                    Image(systemName: "minus")
+                                        .foregroundColor(.white)
+                                        .font(.system(size: 14, weight: .bold))
+                                }
+                            }
+                            
+                            Text("\(config.modifier >= 0 ? "+" : "")\(config.modifier)")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [Color.white, Color.yellow.opacity(0.8)]),
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .frame(minWidth: 50)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(Color.black.opacity(0.5))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .stroke(Color.purple.opacity(0.4), lineWidth: 1)
+                                        )
+                                )
+                                .shadow(color: .purple.opacity(0.3), radius: 2, x: 0, y: 1)
+                            
+                            Button(action: {
+                                if config.modifier < 10 {
+                                    withAnimation(.easeInOut(duration: 0.1)) {
+                                        config.modifier += 1
+                                    }
+                                }
+                            }) {
+                                ZStack {
+                                    Circle()
+                                        .fill(
+                                            LinearGradient(
+                                                gradient: Gradient(colors: [Color.green.opacity(0.8), Color.blue.opacity(0.6)]),
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                        .frame(width: 32, height: 32)
+                                        .shadow(color: .green.opacity(0.4), radius: 2, x: 0, y: 1)
+                                    
+                                    Image(systemName: "plus")
+                                        .foregroundColor(.white)
+                                        .font(.system(size: 14, weight: .bold))
+                                }
+                            }
+                            
+                            Spacer()
+                        }
+                    }
+                    
+                    // Enhanced Roll Type with mystical styling
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Image(systemName: "wand.and.stars")
+                                .foregroundColor(.orange)
+                                .font(.system(size: 14))
+                            Text("Type of Magic")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.orange)
+                        }
+                        
+                        Picker("Roll Type", selection: $config.rollType) {
+                            ForEach(RollType.allCases, id: \.self) { rollType in
+                                Text(rollType.rawValue).tag(rollType)
+                            }
+                        }
+                        .pickerStyle(MenuPickerStyle())
+                        .foregroundColor(.white)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [Color.purple.opacity(0.4), Color.black.opacity(0.6)]),
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(Color.purple.opacity(0.5), lineWidth: 1)
+                                )
+                        )
+                        .shadow(color: .purple.opacity(0.3), radius: 3, x: 0, y: 2)
+                    }
+                }
+                .padding(.leading, 24)
+                .padding(.trailing, 8)
+                .transition(.asymmetric(
+                    insertion: .opacity.combined(with: .move(edge: .top)),
+                    removal: .opacity
+                ))
+            }
+        }
+        .padding(.vertical, 12)
+        .padding(.horizontal, 12)
+        .background(Color.clear)
+    }
 }
 
 struct CustomDiceRowView: View {
@@ -1139,38 +1585,186 @@ struct DMHistoryView: View {
     
     var body: some View {
         NavigationView {
-            List(rollHistory, id: \.self) { roll in
-                Text(roll)
-                    .foregroundColor(.white)
-                    .listRowBackground(Color.purple.opacity(0.2))
-            }
-            .background(Color.black)
-            .navigationTitle("Roll History")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        presentationMode.wrappedValue.dismiss()
+            VStack(spacing: 0) {
+                // Enhanced header with Lord of the Rings theming
+                VStack(spacing: 8) {
+                    HStack {
+                        Image(systemName: "scroll")
+                            .foregroundColor(.orange)
+                            .font(.title2)
+                        Text("📜 Chronicle of Rolls")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundStyle(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [Color.yellow, Color.orange]),
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
                     }
+                    
+                    Text("\(rollHistory.count) fates have been sealed")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                        .italic()
                 }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [
+                                    Color.black.opacity(0.8),
+                                    Color.purple.opacity(0.4),
+                                    Color.black.opacity(0.8)
+                                ]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .shadow(color: .purple.opacity(0.3), radius: 6, x: 0, y: 3)
+                )
+                .padding(.horizontal)
+                .padding(.top, 8)
+                
+                // Enhanced roll history list
+                List(rollHistory, id: \.self) { roll in
+                    HStack(spacing: 12) {
+                        // Mystical bullet point
+                        Image(systemName: "sparkles")
+                            .foregroundColor(.orange)
+                            .font(.system(size: 12))
+                            .frame(width: 16)
+                        
+                        Text(roll)
+                            .foregroundStyle(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [Color.white, Color.yellow.opacity(0.7)]),
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .font(.system(size: 14, weight: .medium))
+                            .lineLimit(2)
+                    }
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 8)
+                    .listRowBackground(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [
+                                        Color.purple.opacity(0.2),
+                                        Color.black.opacity(0.4),
+                                        Color.purple.opacity(0.1)
+                                    ]),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.purple.opacity(0.3), lineWidth: 1)
+                            )
+                    )
+                    .listRowSeparator(.hidden)
+                }
+                .listStyle(PlainListStyle())
+                .background(Color.clear)
+                .scrollContentBackground(.hidden)
             }
+            .background(
+                LinearGradient(
+                    gradient: Gradient(colors: [
+                        Color.black,
+                        Color.purple.opacity(0.3),
+                        Color.black.opacity(0.8),
+                        Color.purple.opacity(0.2)
+                    ]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .navigationBarHidden(true)
+            .overlay(
+                // Custom navigation bar
+                VStack {
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            presentationMode.wrappedValue.dismiss()
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 16))
+                                Text("Close")
+                                    .font(.system(size: 14, weight: .semibold))
+                            }
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(
+                                        LinearGradient(
+                                            gradient: Gradient(colors: [Color.red.opacity(0.7), Color.orange.opacity(0.6)]),
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                            )
+                            .shadow(color: .red.opacity(0.4), radius: 3, x: 0, y: 2)
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+                    Spacer()
+                },
+                alignment: .top
+            )
         }
     }
 }
 
 struct UserDetailsView: View {
-    var userType: ContentView.UserType
+    let userType: ContentView.UserType
+    @StateObject private var rollLogger = RollLogger()
+    @StateObject private var quickRollManager = QuickRollManager()
+    @State private var selectedTab = 0
     
     var body: some View {
-        VStack {
+        TabView(selection: $selectedTab) {
             if userType == .player {
-                PlayerView()
-            } else if userType == .dungeonMaster {
-                DungeonMasterView()
+                PlayerTabView(rollLogger: rollLogger, quickRollManager: quickRollManager)
+                    .tabItem {
+                        Image(systemName: "person.fill")
+                        Text("Player")
+                    }
+                    .tag(0)
+            } else {
+                DungeonMasterTabView(rollLogger: rollLogger, quickRollManager: quickRollManager)
+                    .tabItem {
+                        Image(systemName: "crown.fill")
+                        Text("Dungeon Master")
+                    }
+                    .tag(0)
             }
+            
+            LogTabView(rollLogger: rollLogger)
+                .tabItem {
+                    Image(systemName: "list.bullet")
+                    Text("Log")
+                }
+                .tag(1)
+            
+            GeneralDiceTabView(rollLogger: rollLogger, quickRollManager: quickRollManager)
+                .tabItem {
+                    Image(systemName: "dice.fill")
+                    Text("General Dice")
+                }
+                .tag(2)
         }
-        .navigationTitle(userType == .player ? "Player Setup" : "Dungeon Master Setup")
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
