@@ -18,14 +18,23 @@
 
 ## 🚀 Overview
 
-Interactive dice rolling simulator with customizable dice sets and gaming features
+Interactive dice rolling simulator with customizable dice sets and gaming features. Now featuring a modern TabView interface with four swipable tabs for seamless navigation between Player, Dungeon Master, Log, and General Dice sections.
 
 ### ✨ Key Features
 
-- 🎯 **Custom Dice Sets** - Support for various dice types and custom configurations
-- 🔧 **Gaming Features** - Advanced rolling mechanics and game integration
-- 🌟 **Mobile Ready** - Responsive design for all devices
+- 🎯 **TabView Interface** - Four swipable tabs for seamless navigation
+- 🔧 **Custom Dice Sets** - Support for various dice types and custom configurations
+- 🌟 **Gaming Features** - Advanced rolling mechanics and game integration
+- 📱 **Mobile Ready** - Responsive design optimized for iOS devices
 - 🛡️ **Statistics** - Detailed roll statistics and history
+- ⚡ **Immediate Access** - No setup required, launches directly into Player tab
+
+### 🏗️ TabView Structure
+
+1. **👤 Player Tab** (Default) - Category-based dice rolling with red theme
+2. **👑 Dungeon Master Tab** - Advanced customization with dark purple theme
+3. **📋 Log Tab** - Complete roll history and statistics
+4. **🎲 General Dice Tab** - Quick access to all standard dice types
 
 ---
 
