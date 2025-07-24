@@ -6,9 +6,16 @@ struct PlayerTabView: View {
 
     var body: some View {
         NavigationView {
-            PlayerView()
-                .navigationTitle("Player")
+            PlayerView(rollLogger: rollLogger)
+                .navigationTitle("⚔️ Player")
                 .navigationBarTitleDisplayMode(.inline)
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.red.opacity(0.05), Color.gray.opacity(0.02)]),
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
         }
     }
 }
@@ -19,9 +26,21 @@ struct DungeonMasterTabView: View {
 
     var body: some View {
         NavigationView {
-            DungeonMasterView()
-                .navigationTitle("Dungeon Master")
+            DungeonMasterView(rollLogger: rollLogger)
+                .navigationTitle("🧙‍♂️ Dungeon Master")
                 .navigationBarTitleDisplayMode(.inline)
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color.black,
+                            Color.purple.opacity(0.4),
+                            Color.black.opacity(0.8),
+                            Color.purple.opacity(0.2)
+                        ]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
         }
     }
 }
@@ -31,9 +50,21 @@ struct LogTabView: View {
 
     var body: some View {
         NavigationView {
-            LogListView(rolls: rollLogger.rolls)
-                .navigationTitle("Log")
+            LogView(rollLogger: rollLogger)
+                .navigationTitle("📜 Chronicle")
                 .navigationBarTitleDisplayMode(.inline)
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color.black,
+                            Color.purple.opacity(0.3),
+                            Color.black.opacity(0.8),
+                            Color.purple.opacity(0.2)
+                        ]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
         }
     }
 }
@@ -44,9 +75,16 @@ struct GeneralDiceTabView: View {
 
     var body: some View {
         NavigationView {
-            GeneralDiceView(quickRollManager: quickRollManager)
-                .navigationTitle("General Dice")
+            EnhancedGeneralDiceView(rollLogger: rollLogger, quickRollManager: quickRollManager)
+                .navigationTitle("🎲 General Dice")
                 .navigationBarTitleDisplayMode(.inline)
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.blue.opacity(0.05), Color.gray.opacity(0.02)]),
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
         }
     }
 }
