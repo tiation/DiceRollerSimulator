@@ -38,7 +38,7 @@ An **epic, minimalist dice-rolling app** for iOS, forged in the style of **Lord 
 
 ## 🛠️ Local Development
 
-<div align="center"> <img src="https://github.com/user-attachments/assets/2d9fbdd1-7f2c-411a-a05d-8d5ee4775b35" alt="Simulator Screenshot 1" width="220" /> <img src="https://github.com/user-attachments/assets/c0ee156f-476c-4784-ba07-dc30dabf3a48" alt="DM Screen" width="220" /> <img src="https://github.com/user-attachments/assets/71a78534-8036-4d46-ac79-3dd8eb8715dc" alt="General Dice Roller" width="220" /> <img src="https://github.com/user-attachments/assets/fe77c0f9-d1a2-43a9-bd76-6b5d099a8c68" alt="Player Screen" width="220" /> </div>
+<div align="center"> <img src="https://github.com/user-attachments/assets/2d9fbdd1-7f2c-411a-a05d-8d5ee4775b35" alt="Simulator Screenshot 1" width="220" /> <img src="https://github.com/user-attachments/assets/c0ee156f-476c-4784-ba07-dc30dabf3a48" alt="DM Screen" width="220" /><img src="https://github.com/user-attachments/assets/fe77c0f9-d1a2-43a9-bd76-6b5d099a8c68" alt="Player Screen" width="220" /> </div>
 
 ### Prerequisites
 
