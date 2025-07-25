@@ -6,6 +6,8 @@
 
 Enterprise-grade application with automated CI/CD pipeline and multi-environment deployment.
 
+<img width="1179" height="2556" alt="DMscreenshot" src="https://github.com/user-attachments/assets/c0ee156f-476c-4784-ba07-dc30dabf3a48" />
+
 ## 🚀 Features
 
 - **Enterprise CI/CD**: Automated testing, building, and deployment
@@ -13,6 +15,8 @@ Enterprise-grade application with automated CI/CD pipeline and multi-environment
 - **Multi-Environment**: Staging and production deployments
 - **Container-Ready**: Docker containerization with multi-arch builds
 - **Monitoring**: Integrated with Grafana and alerting systems
+
+<img width="1179" height="2556" alt="general-diceroller" src="https://github.com/user-attachments/assets/71a78534-8036-4d46-ac79-3dd8eb8715dc" />
 
 ## 🏗️ Architecture
 
@@ -22,6 +26,8 @@ Enterprise-grade application with automated CI/CD pipeline and multi-environment
 - **Monitoring**: grafana.sxc.codes (153.92.214.1)
 
 ## 📋 Development
+
+<img width="1179" height="2556" alt="roll-chronicle" src="https://github.com/user-attachments/assets/0622c38b-a0fe-4792-971e-e1fa5c3c6fe6" />
 
 ### Prerequisites
 
@@ -58,6 +64,8 @@ npm run lint
 
 ## 🚢 Deployment
 
+<img width="1179" height="2556" alt="player-screen" src="https://github.com/user-attachments/assets/fe77c0f9-d1a2-43a9-bd76-6b5d099a8c68" />
+
 ### Automatic Deployments
 
 - **Staging**: Triggered on push to `develop` branch
@@ -88,6 +96,8 @@ This project follows enterprise security practices:
 
 ## 📊 Monitoring & Observability
 
+<img width="1179" height="2556" alt="Simulator Screenshot - iPhone 16 - 2025-07-26 at 00 00 22" src="https://github.com/user-attachments/assets/9d35cc23-8a5d-4c93-b2ae-1f32e8fb06e2" />
+
 - **Logs**: Aggregated in ELK Stack (elastic.sxc.codes)
 - **Metrics**: Grafana dashboards (grafana.sxc.codes)
 - **Alerts**: Email and Slack notifications
@@ -100,6 +110,8 @@ This project follows enterprise security practices:
 - **Documentation**: See `docs/` directory
 
 ## 📄 License
+
+<img width="1179" height="2556" alt="Simulator Screenshot - iPhone 16 - 2025-07-26 at 00 00 15" src="https://github.com/user-attachments/assets/2d9fbdd1-7f2c-411a-a05d-8d5ee4775b35" />
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
