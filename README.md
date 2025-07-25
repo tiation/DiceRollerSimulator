@@ -20,6 +20,19 @@
 
 Dice Of Middle-Earth is a Lord of the Rings inspired iOS dice rolling application built with SwiftUI. Designed for D&D players and Dungeon Masters, it offers an immersive fantasy experience with comprehensive dice rolling capabilities, customizable configurations, and accessible design.
 
+### 🎯 Build Target Selection
+
+**Selected Scheme for Shipping: DiceRollerSimulator**
+
+After auditing the project structure, **DiceRollerSimulator** has been selected as the primary build target for production release. This decision is based on:
+
+- ✅ **Complete Project Structure**: DiceRollerSimulator.xcodeproj contains all necessary project files (project.pbxproj, workspace, etc.)
+- ✅ **Functional Build Scheme**: Successfully lists targets, configurations, and schemes via `xcodebuild -list`
+- ✅ **Enterprise-Grade Codebase**: Follows DevOps best practices with comprehensive documentation and modular architecture
+- ❌ **DiceOfMiddleEarth.xcodeproj**: Empty project directory missing project.pbxproj file - not suitable for production
+
+*Build target audit completed and documented per enterprise development standards.*
+
 ### ✨ Key Features
 
 - 🧙‍♂️ **Dual Role Interface** - Separate Player and Dungeon Master experiences
@@ -153,6 +166,22 @@ open .
 3. **Press ⌘+R** to build and run
 4. **Choose your path** - Player or Dungeon Master
 5. **Start rolling dice** and managing your campaigns!
+
+---
+
+## 📱 Releases
+
+The latest IPA build of Dice Of Middle-Earth is available through two installation methods:
+
+### TestFlight
+1. Install TestFlight from the App Store
+2. Accept our beta invitation link (contact [tiatheone@protonmail.com](mailto:tiatheone@protonmail.com) for access)
+3. Install the app through TestFlight
+
+### Side-loading
+1. Download the latest IPA release from our [GitHub Releases page](https://github.com/tiation/tiation-dice-roller-ios/releases)
+2. Install via Xcode or your preferred iOS deployment tool (e.g., AltStore)
+3. Trust the developer certificate in iOS Settings
 
 ---
 
