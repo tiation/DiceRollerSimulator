@@ -53,9 +53,12 @@ git clone https://github.com/tiation/tiation-dice-roller-ios.git
 cd tiation-dice-roller-ios
 npm install
 
+```
+
 ---
 
-## 🌟 Core Functions
+## 🎮 Gaming-Optimized Design
+### 🌟 Core Functions
 
 ### 🎭 Dual Role-Based Experience
 
@@ -126,6 +129,7 @@ npm install
 
 ### 💾 Smart Data Handling
 
+
 ```swift
 // Automatic roll logging with intelligent storage
 func addRoll(_ roll: DiceRoll) {
@@ -135,12 +139,9 @@ func addRoll(_ roll: DiceRoll) {
     }
     saveRolls() // Persistent storage
 }
+
 ```
-
 ---
-
-## 🎮 Gaming-Optimized Design
-
 ### 👥 Player-Centric Features
 
 * ⚡ **Instant Results**: Immediate roll outcome
