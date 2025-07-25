@@ -6,7 +6,7 @@
 
 Enterprise-grade application with automated CI/CD pipeline and multi-environment deployment.
 
-<img width="1179" height="2556" alt="DMscreenshot" src="https://github.com/user-attachments/assets/c0ee156f-476c-4784-ba07-dc30dabf3a48" />
+<img width="1179" height="2556" alt="DMscreenshot" src="https://github.com/user-attachments/assets/c0ee156f-476c-4784-ba07-dc30dabf3a48" /><img width="1179" height="2556" alt="general-diceroller" src="https://github.com/user-attachments/assets/71a78534-8036-4d46-ac79-3dd8eb8715dc" />
 
 ## 🚀 Features
 
@@ -16,7 +16,7 @@ Enterprise-grade application with automated CI/CD pipeline and multi-environment
 - **Container-Ready**: Docker containerization with multi-arch builds
 - **Monitoring**: Integrated with Grafana and alerting systems
 
-<img width="1179" height="2556" alt="general-diceroller" src="https://github.com/user-attachments/assets/71a78534-8036-4d46-ac79-3dd8eb8715dc" />
+
 
 ## 🏗️ Architecture
 
