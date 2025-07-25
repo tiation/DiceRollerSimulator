@@ -1,5 +1,5 @@
 # General Dice View Enhancement Summary
-## Dice of Middle-earth iOS App
+## Dice Of Middle-Earth iOS App
 
 ### ✅ Update Complete
 

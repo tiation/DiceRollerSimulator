@@ -1,7 +1,7 @@
 import Foundation
 
 // Test script to verify roll history sharing functionality
-print("Testing Dice of Middle-earth Roll History Sharing...")
+print("Testing Dice Of Middle-Earth Roll History Sharing...")
 
 // Test 1: RollLogger initialization
 class TestRollLogger: ObservableObject {

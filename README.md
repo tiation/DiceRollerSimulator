@@ -1,8 +1,8 @@
-# 🎲 Dice of Middle-earth - iOS Dice Roller
+# 🎲 Dice Of Middle-Earth - iOS Dice Roller
 
 <div align="center">
 
-![Dice of Middle-earth Banner](https://img.shields.io/badge/🧙‍♂️_TIATION_ECOSYSTEM-Dice_of_Middle_earth-FF6B35?style=for-the-badge&labelColor=0A0A0A&color=FF6B35)
+![Dice Of Middle-Earth Banner](https://img.shields.io/badge/🧙‍♂️_TIATION_ECOSYSTEM-Dice_Of_Middle_Earth-FF6B35?style=for-the-badge&labelColor=0A0A0A&color=FF6B35)
 
 **Lord of the Rings inspired dice rolling app for D&D and tabletop gaming**
 
@@ -18,7 +18,7 @@
 
 ## 🚀 Overview
 
-Dice of Middle-earth is a Lord of the Rings inspired iOS dice rolling application built with SwiftUI. Designed for D&D players and Dungeon Masters, it offers an immersive fantasy experience with comprehensive dice rolling capabilities, customizable configurations, and accessible design.
+Dice Of Middle-Earth is a Lord of the Rings inspired iOS dice rolling application built with SwiftUI. Designed for D&D players and Dungeon Masters, it offers an immersive fantasy experience with comprehensive dice rolling capabilities, customizable configurations, and accessible design.
 
 ### ✨ Key Features
 
@@ -254,7 +254,7 @@ rollType: .savingThrow
 
 ## ♿ Accessibility
 
-Dice of Middle-earth is built with accessibility as a core principle, ensuring all users can enjoy the full D&D experience.
+Dice Of Middle-Earth is built with accessibility as a core principle, ensuring all users can enjoy the full D&D experience.
 
 ### VoiceOver Support
 - **Screen Reader Compatible**: Full VoiceOver navigation support

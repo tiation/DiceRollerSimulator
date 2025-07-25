@@ -611,21 +611,15 @@ struct ContentView: View {
     
     @State private var selectedUserType: UserType? = nil
     @State private var navigateToUserDetails = false
+    @State private var showingDiceAnimation = false
+    @State private var diceRotation: Double = 0
     
     var body: some View {
         NavigationView {
             ZStack {
                 mainContent
-                
-                if showingDiceAnimation {
-                    diceAnimationOverlay
-                }
-                
                 hiddenNavigationLink
             }
-        }
-        .onAppear {
-            setupAudioSession()
         }
     }
     
@@ -636,13 +630,11 @@ struct ContentView: View {
             Spacer()
         }
         .background(backgroundGradient)
-        .blur(radius: showingDiceAnimation ? 3 : 0)
-        .animation(.easeInOut(duration: 0.3), value: showingDiceAnimation)
     }
     
     private var titleSection: some View {
         VStack(spacing: 8) {
-            Text("🧙‍♂️ Dice of Middle-earth")
+            Text("🧙‍♂️ Dice Of Middle-Earth")
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .multilineTextAlignment(.center)
@@ -692,7 +684,6 @@ struct ContentView: View {
             .shadow(radius: 5)
         }
         .buttonStyle(PlainButtonStyle())
-        .disabled(showingDiceAnimation)
     }
     
     private var dungeonMasterButton: some View {
@@ -723,7 +714,6 @@ struct ContentView: View {
             .shadow(radius: 5)
         }
         .buttonStyle(PlainButtonStyle())
-        .disabled(showingDiceAnimation)
     }
     
     private var backgroundGradient: some View {
@@ -732,89 +722,6 @@ struct ContentView: View {
             startPoint: .top,
             endPoint: .bottom
         )
-    }
-    
-    private var diceAnimationOverlay: some View {
-        VStack {
-            Spacer()
-            animationContent
-            Spacer()
-        }
-        .transition(.opacity.combined(with: .scale))
-    }
-    
-    private var animationContent: some View {
-        VStack(spacing: 20) {
-            animatedDice
-            animationText
-        }
-        .padding(40)
-        .background(animationBackground)
-        .shadow(color: (selectedUserType == .player ? Color.red : Color.purple).opacity(0.4), radius: 10)
-    }
-    
-    private var animatedDice: some View {
-        HStack(spacing: 20) {
-            ForEach(0..<3, id: \.self) { index in
-                Image(systemName: "dice.fill")
-                    .font(.system(size: 50))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: selectedUserType == .player ? [.red, .orange] : [.purple, .blue],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .rotationEffect(.degrees(diceRotation + Double(index * 120)))
-                    .scaleEffect(1.0 + sin(diceRotation * .pi / 180 + Double(index)) * 0.2)
-                    .shadow(color: (selectedUserType == .player ? Color.red : Color.purple).opacity(0.5), radius: 5)
-            }
-        }
-    }
-    
-    private var animationText: some View {
-        VStack(spacing: 12) {
-            Text("🎲 The Fates are Rolling... 🎲")
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [.yellow, .orange],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .multilineTextAlignment(.center)
-                .opacity(sin(diceRotation * .pi / 90) * 0.5 + 0.5)
-            
-            Text(selectedUserType == .player ? "⚔️ Preparing Hero's Journey ⚔️" : "🧙‍♂️ Weaving Destiny's Threads 🧙‍♂️")
-                .font(.body)
-                .foregroundColor(.white)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
-        }
-    }
-    
-    private var animationBackground: some View {
-        RoundedRectangle(cornerRadius: 20)
-            .fill(
-                LinearGradient(
-                    colors: [Color.black.opacity(0.9), Color.black.opacity(0.7)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 20)
-                    .stroke(
-                        LinearGradient(
-                            colors: selectedUserType == .player ? [.red, .orange] : [.purple, .blue],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 3
-                    )
-            )
     }
     
     private var hiddenNavigationLink: some View {
@@ -841,12 +748,6 @@ struct ContentView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
             showingDiceAnimation = false
             navigateToUserDetails = true
-            
-            // Reset for next use
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                navigateToUserDetails = false
-                diceRotation = 0
-            }
         }
     }
     

@@ -1,5 +1,5 @@
 # Roll History Sharing Test Report
-## Dice of Middle-earth iOS App
+## Dice Of Middle-Earth iOS App
 
 ### Test Summary
 **Date:** July 24, 2025  
@@ -141,4 +141,4 @@ To manually verify the functionality:
 - **Accessible** from the Chronicle tab
 - **Properly integrated** with existing UI animations and modals
 
-The "Dice of Middle-earth" app is ready for use with fully functional shared roll history logging! ⚔️🎲✨
+The "Dice Of Middle-Earth" app is ready for use with fully functional shared roll history logging! ⚔️🎲✨
