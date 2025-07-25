@@ -1,5 +1,6 @@
 import SwiftUI
 import Foundation
+import AudioToolbox
 
 struct DiceRoll: Identifiable, Codable {
     let id = UUID()
@@ -34,8 +35,9 @@ enum DiceType: String, CaseIterable, Codable {
     case d12 = "d12"
     case d20 = "d20"
     case d100 = "d100"
+    case custom = "d?"
     
-    var sides: Int {
+    func sides(customSides: Int = 6) -> Int {
         switch self {
         case .d4: return 4
         case .d6: return 6
@@ -44,7 +46,12 @@ enum DiceType: String, CaseIterable, Codable {
         case .d12: return 12
         case .d20: return 20
         case .d100: return 100
+        case .custom: return customSides
         }
+    }
+    
+    var sides: Int {
+        return sides(customSides: 6) // Default fallback
     }
 }
 
@@ -128,7 +135,20 @@ class QuickRollManager: ObservableObject {
         QuickRoll(name: "Death Save", dice: 1, sides: 20, modifier: 0, rollType: .savingThrow, description: "Death Saving Throw", isDefault: true),
         QuickRoll(name: "1d12 Damage", dice: 1, sides: 12, modifier: 0, rollType: .damage, description: "1d12 Damage", isDefault: true),
         QuickRoll(name: "2d8 Damage", dice: 2, sides: 8, modifier: 0, rollType: .damage, description: "2d8 Damage", isDefault: true),
-        QuickRoll(name: "Concentration", dice: 1, sides: 20, modifier: 0, rollType: .abilityCheck, description: "Concentration Check", isDefault: true)
+        QuickRoll(name: "Concentration", dice: 1, sides: 20, modifier: 0, rollType: .abilityCheck, description: "Concentration Check", isDefault: true),
+        QuickRoll(name: "Stealth", dice: 1, sides: 20, modifier: 0, rollType: .abilityCheck, description: "Stealth Check", isDefault: true),
+        QuickRoll(name: "Perception", dice: 1, sides: 20, modifier: 0, rollType: .abilityCheck, description: "Perception Check", isDefault: true),
+        QuickRoll(name: "Insight", dice: 1, sides: 20, modifier: 0, rollType: .abilityCheck, description: "Insight Check", isDefault: true),
+        QuickRoll(name: "Intimidation", dice: 1, sides: 20, modifier: 0, rollType: .abilityCheck, description: "Intimidation Check", isDefault: true),
+        QuickRoll(name: "Persuasion", dice: 1, sides: 20, modifier: 0, rollType: .abilityCheck, description: "Persuasion Check", isDefault: true),
+        QuickRoll(name: "Investigation", dice: 1, sides: 20, modifier: 0, rollType: .abilityCheck, description: "Investigation Check", isDefault: true),
+        QuickRoll(name: "Athletics", dice: 1, sides: 20, modifier: 0, rollType: .abilityCheck, description: "Athletics Check", isDefault: true),
+        QuickRoll(name: "Acrobatics", dice: 1, sides: 20, modifier: 0, rollType: .abilityCheck, description: "Acrobatics Check", isDefault: true),
+        QuickRoll(name: "1d10 Damage", dice: 1, sides: 10, modifier: 0, rollType: .damage, description: "1d10 Damage", isDefault: true),
+        QuickRoll(name: "3d6 Damage", dice: 3, sides: 6, modifier: 0, rollType: .damage, description: "3d6 Damage", isDefault: true),
+        QuickRoll(name: "2d4 Healing", dice: 2, sides: 4, modifier: 0, rollType: .healing, description: "2d4 Healing", isDefault: true),
+        QuickRoll(name: "Spell Attack", dice: 1, sides: 20, modifier: 0, rollType: .attackRoll, description: "Spell Attack Roll", isDefault: true),
+        QuickRoll(name: "Custom Die", dice: 1, sides: 0, modifier: 0, rollType: .normal, description: "Custom Die Roll", isDefault: true)
     ]
     
     init() {
@@ -161,7 +181,7 @@ class QuickRollManager: ObservableObject {
         userDefaults.set(sides, forKey: customDieKey)
     }
     
-    private func saveQuickRolls() {
+    func saveQuickRolls() {
         if let featuredEncoded = try? JSONEncoder().encode(featuredQuickRolls) {
             userDefaults.set(featuredEncoded, forKey: featuredRollsKey)
         }
@@ -186,8 +206,8 @@ class QuickRollManager: ObservableObject {
            !decoded.isEmpty {
             featuredQuickRolls = decoded
         } else {
-            // Always ensure we have 4 featured quick rolls
-            featuredQuickRolls = Array(allQuickRolls.prefix(4))
+            // Always ensure we have 6 featured quick rolls
+            featuredQuickRolls = Array(allQuickRolls.prefix(6))
             saveQuickRolls() // Save defaults on first run or if empty
         }
     }
@@ -216,7 +236,7 @@ struct PlayerTabView: View {
 
     var body: some View {
         NavigationView {
-            PlayerView(rollLogger: rollLogger)
+            PlayerView(rollLogger: rollLogger, quickRollManager: quickRollManager)
                 .navigationTitle("Player")
                 .navigationBarTitleDisplayMode(.inline)
         }
@@ -229,7 +249,7 @@ struct DungeonMasterTabView: View {
 
     var body: some View {
         NavigationView {
-            DungeonMasterView(rollLogger: rollLogger)
+            DungeonMasterView(rollLogger: rollLogger, quickRollManager: quickRollManager)
                 .navigationTitle("Dungeon Master")
                 .navigationBarTitleDisplayMode(.inline)
         }
@@ -590,116 +610,266 @@ struct ContentView: View {
     }
     
     @State private var selectedUserType: UserType? = nil
+    @State private var navigateToUserDetails = false
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 30) {
-                // Lord of the Rings inspired title
-                Text("🧙‍♂️ Dice of Middle-earth")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.primary)
-                    .padding(.top, 40)
+            ZStack {
+                mainContent
                 
-                Text("Choose Your Path")
-                    .font(.title2)
-                    .foregroundColor(.secondary)
-                    .padding(.bottom, 20)
-                
-                VStack(spacing: 20) {
-                    Button(action: {
-                        selectedUserType = .player
-                    }) {
-                        VStack {
-                            Text("⚔️")
-                                .font(.system(size: 40))
-                            Text("Player")
-                                .font(.title)
-                                .fontWeight(.bold)
-                            Text("Hero of the Realm")
-                                .font(.caption)
-                        }
-                        .padding(30)
-                        .frame(maxWidth: .infinity)
-                        .background(
-                            LinearGradient(
-                                gradient: Gradient(colors: [Color.red.opacity(0.8), Color.red.opacity(0.6)]),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .foregroundColor(.white)
-                        .cornerRadius(15)
-                        .shadow(radius: selectedUserType == .player ? 10 : 5)
-                        .scaleEffect(selectedUserType == .player ? 1.05 : 1.0)
-                    }
-                    
-                    Button(action: {
-                        selectedUserType = .dungeonMaster
-                    }) {
-                        VStack {
-                            Text("🧙‍♂️")
-                                .font(.system(size: 40))
-                            Text("Dungeon Master")
-                                .font(.title)
-                                .fontWeight(.bold)
-                            Text("Weaver of Fates")
-                                .font(.caption)
-                        }
-                        .padding(30)
-                        .frame(maxWidth: .infinity)
-                        .background(
-                            LinearGradient(
-                                gradient: Gradient(colors: [Color.purple.opacity(0.8), Color.purple.opacity(0.6)]),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .foregroundColor(.white)
-                        .cornerRadius(15)
-                        .shadow(radius: selectedUserType == .dungeonMaster ? 10 : 5)
-                        .scaleEffect(selectedUserType == .dungeonMaster ? 1.05 : 1.0)
-                    }
-                }
-                .padding(.horizontal, 30)
-                
-                if let userType = selectedUserType {
-                    NavigationLink(
-                        destination: UserDetailsView(userType: userType),
-                        label: {
-                            Text("Enter the Adventure")
-                                .font(.title2)
-                                .fontWeight(.semibold)
-                                .padding()
-                                .frame(maxWidth: .infinity)
-                                .background(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [Color.black, Color.gray.opacity(0.8)]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .foregroundColor(.white)
-                                .cornerRadius(12)
-                                .shadow(radius: 5)
-                        }
-                    )
-                    .padding(.horizontal, 30)
-                    .padding(.top, 20)
+                if showingDiceAnimation {
+                    diceAnimationOverlay
                 }
                 
-                Spacer()
+                hiddenNavigationLink
             }
+        }
+        .onAppear {
+            setupAudioSession()
+        }
+    }
+    
+    private var mainContent: some View {
+        VStack(spacing: 30) {
+            titleSection
+            userTypeButtons
+            Spacer()
+        }
+        .background(backgroundGradient)
+        .blur(radius: showingDiceAnimation ? 3 : 0)
+        .animation(.easeInOut(duration: 0.3), value: showingDiceAnimation)
+    }
+    
+    private var titleSection: some View {
+        VStack(spacing: 8) {
+            Text("🧙‍♂️ Dice of Middle-earth")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .multilineTextAlignment(.center)
+                .foregroundColor(.primary)
+                .padding(.top, 40)
+            
+            Text("Choose Your Path")
+                .font(.title2)
+                .foregroundColor(.secondary)
+                .padding(.bottom, 20)
+        }
+    }
+    
+    private var userTypeButtons: some View {
+        VStack(spacing: 20) {
+            playerButton
+            dungeonMasterButton
+        }
+        .padding(.horizontal, 30)
+    }
+    
+    private var playerButton: some View {
+        Button(action: {
+            selectedUserType = .player
+            triggerDiceRollAndNavigate()
+        }) {
+            VStack {
+                Text("⚔️")
+                    .font(.system(size: 40))
+                Text("Player")
+                    .font(.title)
+                    .fontWeight(.bold)
+                Text("Hero of the Realm")
+                    .font(.caption)
+            }
+            .padding(30)
+            .frame(maxWidth: .infinity)
             .background(
                 LinearGradient(
-                    gradient: Gradient(colors: [Color.black.opacity(0.05), Color.gray.opacity(0.1)]),
+                    gradient: Gradient(colors: [Color.red.opacity(0.8), Color.red.opacity(0.6)]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .foregroundColor(.white)
+            .cornerRadius(15)
+            .shadow(radius: 5)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .disabled(showingDiceAnimation)
+    }
+    
+    private var dungeonMasterButton: some View {
+        Button(action: {
+            selectedUserType = .dungeonMaster
+            triggerDiceRollAndNavigate()
+        }) {
+            VStack {
+                Text("🧙‍♂️")
+                    .font(.system(size: 40))
+                Text("Dungeon Master")
+                    .font(.title)
+                    .fontWeight(.bold)
+                Text("Weaver of Fates")
+                    .font(.caption)
+            }
+            .padding(30)
+            .frame(maxWidth: .infinity)
+            .background(
+                LinearGradient(
+                    gradient: Gradient(colors: [Color.purple.opacity(0.8), Color.purple.opacity(0.6)]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .foregroundColor(.white)
+            .cornerRadius(15)
+            .shadow(radius: 5)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .disabled(showingDiceAnimation)
+    }
+    
+    private var backgroundGradient: some View {
+        LinearGradient(
+            gradient: Gradient(colors: [Color.black.opacity(0.05), Color.gray.opacity(0.1)]),
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+    
+    private var diceAnimationOverlay: some View {
+        VStack {
+            Spacer()
+            animationContent
+            Spacer()
+        }
+        .transition(.opacity.combined(with: .scale))
+    }
+    
+    private var animationContent: some View {
+        VStack(spacing: 20) {
+            animatedDice
+            animationText
+        }
+        .padding(40)
+        .background(animationBackground)
+        .shadow(color: (selectedUserType == .player ? Color.red : Color.purple).opacity(0.4), radius: 10)
+    }
+    
+    private var animatedDice: some View {
+        HStack(spacing: 20) {
+            ForEach(0..<3, id: \.self) { index in
+                Image(systemName: "dice.fill")
+                    .font(.system(size: 50))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: selectedUserType == .player ? [.red, .orange] : [.purple, .blue],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .rotationEffect(.degrees(diceRotation + Double(index * 120)))
+                    .scaleEffect(1.0 + sin(diceRotation * .pi / 180 + Double(index)) * 0.2)
+                    .shadow(color: (selectedUserType == .player ? Color.red : Color.purple).opacity(0.5), radius: 5)
+            }
+        }
+    }
+    
+    private var animationText: some View {
+        VStack(spacing: 12) {
+            Text("🎲 The Fates are Rolling... 🎲")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [.yellow, .orange],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .multilineTextAlignment(.center)
+                .opacity(sin(diceRotation * .pi / 90) * 0.5 + 0.5)
+            
+            Text(selectedUserType == .player ? "⚔️ Preparing Hero's Journey ⚔️" : "🧙‍♂️ Weaving Destiny's Threads 🧙‍♂️")
+                .font(.body)
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 40)
+        }
+    }
+    
+    private var animationBackground: some View {
+        RoundedRectangle(cornerRadius: 20)
+            .fill(
+                LinearGradient(
+                    colors: [Color.black.opacity(0.9), Color.black.opacity(0.7)],
                     startPoint: .top,
                     endPoint: .bottom
                 )
             )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(
+                        LinearGradient(
+                            colors: selectedUserType == .player ? [.red, .orange] : [.purple, .blue],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 3
+                    )
+            )
+    }
+    
+    private var hiddenNavigationLink: some View {
+        NavigationLink(
+            destination: selectedUserType != nil ? UserDetailsView(userType: selectedUserType!) : nil,
+            isActive: $navigateToUserDetails
+        ) {
+            EmptyView()
         }
-        .animation(.easeInOut(duration: 0.3), value: selectedUserType)
+        .hidden()
+    }
+    
+    private func triggerDiceRollAndNavigate() {
+        // Start dice rolling animation
+        showingDiceAnimation = true
+        playDiceRollSound()
+        
+        // Start continuous dice rotation animation
+        withAnimation(.linear(duration: 2.0).repeatCount(3, autoreverses: false)) {
+            diceRotation = 1080 // 3 full rotations
+        }
+        
+        // Navigate after animation completes
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            showingDiceAnimation = false
+            navigateToUserDetails = true
+            
+            // Reset for next use
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                navigateToUserDetails = false
+                diceRotation = 0
+            }
+        }
+    }
+    
+    private func playDiceRollSound() {
+        // Play system sound for dice rolling
+        // Using system sounds that are available on iOS
+        let soundID: SystemSoundID = 1103 // Mail sent sound - closest to dice rolling
+        AudioServicesPlaySystemSound(soundID)
+        
+        // Play additional sound after a delay for rolling effect
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            AudioServicesPlaySystemSound(1004) // SMS received sound
+        }
+        
+        // Final "result" sound
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+            AudioServicesPlaySystemSound(1016) // SMS alert sound
+        }
+    }
+    
+    private func setupAudioSession() {
+        // Import AVFoundation for audio session setup if needed
+        // For now, we'll use system sounds which don't require special setup
     }
 }
 
@@ -1013,16 +1183,18 @@ struct QuickRollEditorView: View {
 
 struct PlayerView: View {
     @ObservedObject var rollLogger: RollLogger
+    @ObservedObject var quickRollManager: QuickRollManager
     
+    @State private var selectedGlobalRollType: RollType = .normal
     @State private var customDiceConfigs: [CustomDiceConfig] = {
         var configs: [CustomDiceConfig] = []
-        for i in 1...25 {
+        for i in 1...5 {
             configs.append(CustomDiceConfig(
                 id: i,
                 name: "Hero Roll \(i)",
                 diceType: .d20,
-                modifier: 0,
-                rollType: .normal
+                numberOfDice: 1,
+                modifier: 0
             ))
         }
         return configs
@@ -1035,7 +1207,6 @@ struct PlayerView: View {
     @State private var showingRollAnimation = false
     @State private var showingCustomModal = false
     @State private var lastRollDetails: RollResultDetails?
-    @State private var showingDiceSetup = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -1052,25 +1223,90 @@ struct PlayerView: View {
                     .fontWeight(.semibold)
                     .foregroundColor(.red.opacity(0.9))
                     .italic()
-                
-                Text("Forge your destiny with these sacred dice")
-                    .font(.caption)
-                    .foregroundColor(.primary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-                    .padding(.bottom, 8)
             }
+            .frame(maxWidth: .infinity)
             .padding(.horizontal)
             .background(
-                RoundedRectangle(cornerRadius: 16)
+                Rectangle()
                     .fill(Color.red.opacity(0.1))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 16)
+                        Rectangle()
                             .stroke(Color.red.opacity(0.3), lineWidth: 1)
+                    )
+                    .ignoresSafeArea(.all, edges: .horizontal)
+            )
+            .padding(.bottom, 8)
+            
+            // Quick Rolls Section
+            VStack(spacing: 12) {
+                Text("⚡ Quick Rolls")
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.orange)
+                
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(quickRollManager.allQuickRolls) { quickRoll in
+                            Button(action: {
+                                performQuickRoll(quickRoll)
+                            }) {
+                                VStack(spacing: 4) {
+                                    Text(quickRoll.name)
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.white)
+                                        .lineLimit(1)
+                                    Text("\(quickRoll.dice)d\(quickRoll.sides)\(quickRoll.modifier != 0 ? (quickRoll.modifier > 0 ? "+\(quickRoll.modifier)" : "\(quickRoll.modifier)") : "")")
+                                        .font(.caption2)
+                                        .foregroundColor(.white.opacity(0.8))
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(
+                                    LinearGradient(
+                                        colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.6)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .cornerRadius(12)
+                                .shadow(color: .blue.opacity(0.3), radius: 2)
+                            }
+                        }
+                        .onMove(perform: moveQuickRoll)
+                    }
+                    .padding(.horizontal)
+                }
+                
+            }
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.black.opacity(0.2))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.orange.opacity(0.3), lineWidth: 1)
                     )
             )
             .padding(.horizontal)
             .padding(.bottom)
+            
+            // Hero Rolls Section Title
+            HStack {
+                Text("🛡️ Hero Rolls")
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.red)
+                Spacer()
+                Button(action: addHeroRoll) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(.green)
+                        .shadow(color: .green.opacity(0.3), radius: 2)
+                }
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 8)
             
             // Dice List
             List {
@@ -1096,7 +1332,7 @@ struct PlayerView: View {
                         // Show roll animation first
                         showingRollAnimation = true
                         
-                        // Add to rollLogger
+                        // Add to rollLogger using global roll type
                         let diceRoll = DiceRoll(
                             diceType: config.diceType.sides,
                             numberOfDice: 1,
@@ -1104,7 +1340,7 @@ struct PlayerView: View {
                             total: baseRoll,
                             modifier: config.modifier,
                             finalTotal: finalResult,
-                            rollType: config.rollType,
+                            rollType: selectedGlobalRollType,
                             description: config.name,
                             timestamp: Date()
                         )
@@ -1147,54 +1383,11 @@ struct PlayerView: View {
                     .scaleEffect(selectedRowId == config.id ? 1.02 : 1.0)
                     .animation(.easeInOut(duration: 0.2), value: selectedRowId == config.id)
                 }
+                .onDelete(perform: deleteHeroRoll)
             }
             .listStyle(PlainListStyle())
             .background(Color.clear)
             
-            // Action Buttons
-            HStack(spacing: 16) {
-                Button(action: {
-                    showingDiceSetup = true
-                }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "gear")
-                            .font(.system(size: 16))
-                        Text("Setup")
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                    }
-                    .foregroundColor(.white)
-                    .padding(.vertical, 12)
-                    .padding(.horizontal, 20)
-                    .background(Color.blue.opacity(0.8))
-                    .cornerRadius(12)
-                }
-                
-                Button(action: {
-                    showingHistory = true
-                }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "scroll")
-                            .font(.system(size: 16))
-                        Text("Chronicle")
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                        Text("(\(rollLogger.rolls.count))")
-                            .font(.caption)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color.white.opacity(0.2))
-                            .cornerRadius(8)
-                    }
-                    .foregroundColor(.white)
-                    .padding(.vertical, 12)
-                    .padding(.horizontal, 20)
-                    .background(Color.red.opacity(0.8))
-                    .cornerRadius(12)
-                }
-            }
-            .padding(.horizontal)
-            .padding(.bottom)
         }
         .background(
             LinearGradient(
@@ -1218,9 +1411,6 @@ struct PlayerView: View {
         }
         .sheet(isPresented: $showingHistory) {
             HistoryView(rolls: rollLogger.rolls)
-        }
-        .sheet(isPresented: $showingDiceSetup) {
-            DiceSetupView(configs: $customDiceConfigs)
         }
         .overlay(
             // Roll animation overlay
@@ -1259,20 +1449,89 @@ struct PlayerView: View {
             : nil
         )
     }
+    
+    private func addHeroRoll() {
+        let newId = (customDiceConfigs.map { $0.id }.max() ?? 0) + 1
+        let newConfig = CustomDiceConfig(
+            id: newId,
+            name: "Hero Roll \(newId)",
+            diceType: .d20,
+            numberOfDice: 1,
+            modifier: 0
+        )
+        customDiceConfigs.append(newConfig)
+    }
+    
+    private func moveHeroRoll(from source: IndexSet, to destination: Int) {
+        customDiceConfigs.move(fromOffsets: source, toOffset: destination)
+    }
+    
+    private func deleteHeroRoll(at offsets: IndexSet) {
+        // Don't allow deletion if there are only 5 rolls left
+        if customDiceConfigs.count > 5 {
+            customDiceConfigs.remove(atOffsets: offsets)
+        }
+    }
+    
+    private func moveQuickRoll(from source: IndexSet, to destination: Int) {
+        quickRollManager.allQuickRolls.move(fromOffsets: source, toOffset: destination)
+        quickRollManager.saveQuickRolls()
+    }
+    
+    // Quick Roll function
+    private func performQuickRoll(_ quickRoll: QuickRoll) {
+        // Handle custom dice type properly
+        let actualSides: Int
+        if quickRoll.sides == 0 { // Custom die type
+            actualSides = quickRollManager.customDieSides
+        } else {
+            actualSides = quickRoll.sides
+        }
+        
+        // Roll the dice based on the quick roll configuration
+        let results: [Int] = (0..<quickRoll.dice).map { _ in Int.random(in: 1...actualSides) }
+        let total = results.reduce(0, +)
+        let finalTotal = total + quickRoll.modifier
+        
+        // Create and add the dice roll to logger
+        let diceRoll = DiceRoll(
+            diceType: actualSides,
+            numberOfDice: quickRoll.dice,
+            results: results,
+            total: total,
+            modifier: quickRoll.modifier,
+            finalTotal: finalTotal,
+            rollType: selectedGlobalRollType, // Use global roll type instead of quickRoll.rollType
+            description: quickRoll.name,
+            timestamp: Date()
+        )
+        rollLogger.addRoll(diceRoll)
+        
+        // Show animation and result
+        showingRollAnimation = true
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            showingRollAnimation = false
+            let displaySides = quickRoll.sides == 0 ? "d?" : "d\(quickRoll.sides)"
+            lastRollResult = "⚡ \(quickRoll.name): \(finalTotal) (\(quickRoll.dice)\(displaySides)\(quickRoll.modifier >= 0 ? "+" : "")\(quickRoll.modifier))"
+            showingRollResult = true
+        }
+    }
 }
 
 struct DungeonMasterView: View {
     @ObservedObject var rollLogger: RollLogger
+    @ObservedObject var quickRollManager: QuickRollManager
     
     @State private var customDiceConfigs: [CustomDiceConfig] = {
         var configs: [CustomDiceConfig] = []
-        for i in 1...25 {
+        for i in 1...5 {
             configs.append(CustomDiceConfig(
                 id: i,
                 name: "Fate Roll \(i)",
                 diceType: .d20,
-                modifier: 0,
-                rollType: .normal
+                numberOfDice: 1,
+                modifier: 0
             ))
         }
         return configs
@@ -1299,19 +1558,88 @@ struct DungeonMasterView: View {
                     .fontWeight(.semibold)
                     .foregroundColor(.orange.opacity(0.9))
                     .italic()
-                
-                Text("The power of Middle-earth flows through these dice")
-                    .font(.caption)
-                    .foregroundColor(.gray)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-                    .padding(.bottom, 8)
             }
             .padding(.horizontal)
-            .background(Color.black.opacity(0.3))
-            .cornerRadius(16)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.orange.opacity(0.1))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+                    )
+            )
+            .padding(.horizontal)
+            .padding(.bottom, 8)
+            
+            // Quick Rolls Section
+            VStack(spacing: 12) {
+                Text("⚡ Quick Rolls")
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.purple)
+                
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(quickRollManager.allQuickRolls) { quickRoll in
+                            Button(action: {
+                                performQuickRoll(quickRoll)
+                            }) {
+                                VStack(spacing: 4) {
+                                    Text(quickRoll.name)
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.white)
+                                        .lineLimit(1)
+                                    Text("\(quickRoll.dice)d\(quickRoll.sides)\(quickRoll.modifier != 0 ? (quickRoll.modifier > 0 ? "+\(quickRoll.modifier)" : "\(quickRoll.modifier)") : "")")
+                                        .font(.caption2)
+                                        .foregroundColor(.white.opacity(0.8))
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(
+                                    LinearGradient(
+                                        colors: [Color.purple.opacity(0.8), Color.orange.opacity(0.6)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .cornerRadius(12)
+                                .shadow(color: .purple.opacity(0.3), radius: 2)
+                            }
+                        }
+                        .onMove(perform: moveQuickRoll)
+                    }
+                    .padding(.horizontal)
+                }
+            }
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.black.opacity(0.2))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.purple.opacity(0.3), lineWidth: 1)
+                    )
+            )
             .padding(.horizontal)
             .padding(.bottom)
+            
+            // Fate Rolls Section Title
+            HStack {
+                Text("🔮 Fate Rolls")
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.purple)
+                Spacer()
+                Button(action: addFateRoll) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(.green)
+                        .shadow(color: .green.opacity(0.3), radius: 2)
+                }
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 8)
             
             // Dice List
             List {
@@ -1323,35 +1651,11 @@ struct DungeonMasterView: View {
                     .listRowSeparator(.hidden)
                     .padding(.vertical, 2)
                 }
+                .onDelete(perform: deleteFateRoll)
             }
             .listStyle(PlainListStyle())
             .background(Color.clear)
             
-            // History Button
-            Button(action: {
-                showingHistory = true
-            }) {
-                HStack(spacing: 12) {
-                    Image(systemName: "scroll")
-                        .font(.system(size: 18))
-                    Text("Chronicle of Rolls")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                    Text("(\(rollHistory.count))")
-                        .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
-                        .background(Color.white.opacity(0.2))
-                        .cornerRadius(10)
-                }
-                .foregroundColor(.white)
-                .padding(.vertical, 14)
-                .padding(.horizontal, 20)
-                .background(Color.red.opacity(0.7))
-                .cornerRadius(12)
-            }
-            .padding(.horizontal)
-            .padding(.bottom)
         }
         .background(
             LinearGradient(
@@ -1417,6 +1721,20 @@ struct DungeonMasterView: View {
     private func performRoll(for config: CustomDiceConfig, result: Int) {
         showingRollAnimation = true
         
+        // Add to rollLogger
+        let diceRoll = DiceRoll(
+            diceType: config.diceType.sides,
+            numberOfDice: 1,
+            results: [result - config.modifier],
+            total: result - config.modifier,
+            modifier: config.modifier,
+            finalTotal: result,
+            rollType: .normal,
+            description: config.name,
+            timestamp: Date()
+        )
+        rollLogger.addRoll(diceRoll)
+        
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
             let rollDescription = "⚔️ \(config.name): \(result) (\(config.diceType.rawValue)\(config.modifier >= 0 ? "+" : "")\(config.modifier))"
             lastRollResult = rollDescription
@@ -1429,6 +1747,80 @@ struct DungeonMasterView: View {
                 rollHistory = Array(rollHistory.prefix(50))
             }
         }
+    }
+    
+    // Quick Roll function for DM
+    private func performQuickRoll(_ quickRoll: QuickRoll) {
+        // Handle custom dice type properly
+        let actualSides: Int
+        if quickRoll.sides == 0 { // Custom die type
+            actualSides = quickRollManager.customDieSides
+        } else {
+            actualSides = quickRoll.sides
+        }
+        
+        // Roll the dice based on the quick roll configuration
+        let results: [Int] = (0..<quickRoll.dice).map { _ in Int.random(in: 1...actualSides) }
+        let total = results.reduce(0, +)
+        let finalTotal = total + quickRoll.modifier
+        
+        // Create and add the dice roll to logger
+        let diceRoll = DiceRoll(
+            diceType: actualSides,
+            numberOfDice: quickRoll.dice,
+            results: results,
+            total: total,
+            modifier: quickRoll.modifier,
+            finalTotal: finalTotal,
+            rollType: quickRoll.rollType,
+            description: quickRoll.name,
+            timestamp: Date()
+        )
+        rollLogger.addRoll(diceRoll)
+        
+        // Show animation and result
+        showingRollAnimation = true
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            showingRollAnimation = false
+            let displaySides = quickRoll.sides == 0 ? "d?" : "d\(quickRoll.sides)"
+            lastRollResult = "⚡ \(quickRoll.name): \(finalTotal) (\(quickRoll.dice)\(displaySides)\(quickRoll.modifier >= 0 ? "+" : "")\(quickRoll.modifier))"
+            showingRollResult = true
+            rollHistory.insert(lastRollResult, at: 0)
+            
+            // Keep only last 50 rolls
+            if rollHistory.count > 50 {
+                rollHistory = Array(rollHistory.prefix(50))
+            }
+        }
+    }
+    
+    private func addFateRoll() {
+        let newId = (customDiceConfigs.map { $0.id }.max() ?? 0) + 1
+        let newConfig = CustomDiceConfig(
+            id: newId,
+            name: "Fate Roll \(newId)",
+            diceType: .d20,
+            numberOfDice: 1,
+            modifier: 0
+        )
+        customDiceConfigs.append(newConfig)
+    }
+    
+    private func moveFateRoll(from source: IndexSet, to destination: Int) {
+        customDiceConfigs.move(fromOffsets: source, toOffset: destination)
+    }
+    
+    private func deleteFateRoll(at offsets: IndexSet) {
+        // Don't allow deletion if there are only 5 rolls left
+        if customDiceConfigs.count > 5 {
+            customDiceConfigs.remove(atOffsets: offsets)
+        }
+    }
+    
+    private func moveQuickRoll(from source: IndexSet, to destination: Int) {
+        quickRollManager.allQuickRolls.move(fromOffsets: source, toOffset: destination)
+        quickRollManager.saveQuickRolls()
     }
 }
 
@@ -1450,8 +1842,8 @@ struct CustomDiceConfig: Identifiable {
     let id: Int
     var name: String
     var diceType: DiceType
+    var numberOfDice: Int
     var modifier: Int
-    var rollType: RollType
 }
 
 struct DungeonMasterDiceRowView: View {
@@ -1691,6 +2083,7 @@ struct DungeonMasterDiceRowView: View {
                                         .font(.system(size: 14, weight: .bold))
                                 }
                             }
+                            .buttonStyle(PlainButtonStyle())
                             
                             Text("\(config.modifier >= 0 ? "+" : "")\(config.modifier)")
                                 .font(.system(size: 18, weight: .bold))
@@ -1738,46 +2131,12 @@ struct DungeonMasterDiceRowView: View {
                                         .font(.system(size: 14, weight: .bold))
                                 }
                             }
+                            .buttonStyle(PlainButtonStyle())
                             
                             Spacer()
                         }
                     }
                     
-                    // Enhanced Roll Type with mystical styling
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Image(systemName: "wand.and.stars")
-                                .foregroundColor(.orange)
-                                .font(.system(size: 14))
-                            Text("Type of Magic")
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.orange)
-                        }
-                        
-                        Picker("Roll Type", selection: $config.rollType) {
-                            ForEach(RollType.allCases, id: \.self) { rollType in
-                                Text(rollType.rawValue).tag(rollType)
-                            }
-                        }
-                        .pickerStyle(MenuPickerStyle())
-                        .foregroundColor(.white)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [Color.purple.opacity(0.4), Color.black.opacity(0.6)]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.purple.opacity(0.5), lineWidth: 1)
-                                )
-                        )
-                        .shadow(color: .purple.opacity(0.3), radius: 3, x: 0, y: 2)
-                    }
                 }
                 .padding(.leading, 24)
                 .padding(.trailing, 8)
@@ -1891,6 +2250,7 @@ struct CustomDiceRowView: View {
                                     .background(Color.red.opacity(0.7))
                                     .clipShape(Circle())
                             }
+                            .buttonStyle(PlainButtonStyle())
                             
                             Text("\(config.modifier >= 0 ? "+" : "")\(config.modifier)")
                                 .font(.system(size: 16, weight: .medium))
@@ -1905,28 +2265,55 @@ struct CustomDiceRowView: View {
                                 Image(systemName: "plus")
                                     .foregroundColor(.white)
                                     .padding(8)
-                                    .background(Color.red.opacity(0.7))
+                                    .background(Color.green.opacity(0.7))
                                     .clipShape(Circle())
                             }
+                            .buttonStyle(PlainButtonStyle())
                             
                             Spacer()
                         }
                     }
                     
-                    // Roll Type
+                    // Number of Dice
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Roll Type")
+                        Text("Number of Dice")
                             .font(.caption)
                             .foregroundColor(.gray)
                         
-                        Picker("Roll Type", selection: $config.rollType) {
-                            ForEach(RollType.allCases, id: \.self) { rollType in
-                                Text(rollType.rawValue).tag(rollType)
+                        HStack {
+                            Button(action: {
+                                if config.numberOfDice > 1 {
+                                    config.numberOfDice -= 1
+                                }
+                            }) {
+                                Image(systemName: "minus")
+                                    .foregroundColor(.white)
+                                    .padding(8)
+                                    .background(Color.red.opacity(0.7))
+                                    .clipShape(Circle())
                             }
+                            .buttonStyle(PlainButtonStyle())
+                            
+                            Text("\(config.numberOfDice)")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white)
+                                .frame(minWidth: 40)
+                            
+                            Button(action: {
+                                if config.numberOfDice < 10 {
+                                    config.numberOfDice += 1
+                                }
+                            }) {
+                                Image(systemName: "plus")
+                                    .foregroundColor(.white)
+                                    .padding(8)
+                                    .background(Color.green.opacity(0.7))
+                                    .clipShape(Circle())
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            
+                            Spacer()
                         }
-                        .pickerStyle(MenuPickerStyle())
-                        .background(Color.purple.opacity(0.3))
-                        .cornerRadius(8)
                     }
                 }
                 .padding(.leading, 20)
@@ -1953,18 +2340,12 @@ struct LogView: View {
                         Text("📜 Roll Chronicle")
                             .font(.title2)
                             .fontWeight(.bold)
-                            .foregroundStyle(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [Color.yellow, Color.orange]),
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
+                            .foregroundColor(.orange)
                     }
                     
                     Text("\(rollLogger.rolls.count) fates have been recorded")
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(.white)
                         .italic()
                 }
                 .padding()
@@ -2004,16 +2385,18 @@ struct LogView: View {
                         Spacer()
                     }
                 } else {
-                    List(rollLogger.rolls) { roll in
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                VStack(alignment: .leading) {
-                                    Text(roll.rollType.rawValue)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                    Text("\(roll.numberOfDice)d\(roll.diceType)\(roll.modifier != 0 ? (roll.modifier > 0 ? "+\(roll.modifier)" : "\(roll.modifier)") : "")")
-                                        .font(.headline)
-                                }
+                    List {
+                        ForEach(rollLogger.rolls, id: \.id) { roll in
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    VStack(alignment: .leading) {
+                                        Text(roll.rollType.rawValue)
+                                            .font(.caption)
+                                            .foregroundColor(.white.opacity(0.8))
+                                        Text("\(roll.numberOfDice)d\(roll.diceType)\(roll.modifier != 0 ? (roll.modifier > 0 ? "+\(roll.modifier)" : "\(roll.modifier)") : "")")
+                                            .font(.headline)
+                                            .foregroundColor(.white)
+                                    }
                                 
                                 Spacer()
                                 
@@ -2026,22 +2409,23 @@ struct LogView: View {
                             if !roll.description.isEmpty {
                                 Text(roll.description)
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(.white.opacity(0.7))
                             }
                             
                             Text("Rolls: \(roll.results.map { String($0) }.joined(separator: ", "))")
                                 .font(.body)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.white.opacity(0.8))
                             
                             if roll.modifier != 0 {
                                 Text("Base: \(roll.total) | Modifier: \(roll.modifier >= 0 ? "+" : "")\(roll.modifier)")
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(.white.opacity(0.7))
                             }
                             
                             Text(roll.timestamp, style: .relative)
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.white.opacity(0.6))
+                            }
                         }
                         .padding(.vertical, 6)
                         .padding(.horizontal, 8)
@@ -2071,16 +2455,7 @@ struct LogView: View {
                 }
             }
             .background(
-                LinearGradient(
-                    gradient: Gradient(colors: [
-                        Color.black,
-                        Color.purple.opacity(0.3),
-                        Color.black.opacity(0.8),
-                        Color.purple.opacity(0.2)
-                    ]),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+                Color.black
             )
             .navigationBarHidden(true)
         }
@@ -2252,13 +2627,13 @@ struct UserDetailsView: View {
             // Main Role View with Swipe Navigation
             ZStack {
                 if currentUserType == .player {
-                    PlayerView(rollLogger: rollLogger)
+                    PlayerView(rollLogger: rollLogger, quickRollManager: quickRollManager)
                         .transition(.asymmetric(
                             insertion: .move(edge: .trailing),
                             removal: .move(edge: .leading)
                         ))
                 } else {
-                    DungeonMasterView(rollLogger: rollLogger)
+                    DungeonMasterView(rollLogger: rollLogger, quickRollManager: quickRollManager)
                         .transition(.asymmetric(
                             insertion: .move(edge: .leading),
                             removal: .move(edge: .trailing)
@@ -2763,6 +3138,7 @@ struct EnhancedCustomDiceRowView: View {
                                     .background(Color.red.opacity(0.7))
                                     .clipShape(Circle())
                             }
+                            .buttonStyle(PlainButtonStyle())
                             
                             Text("\(config.modifier >= 0 ? "+" : "")\(config.modifier)")
                                 .font(.system(size: 16, weight: .medium))
@@ -2790,32 +3166,12 @@ struct EnhancedCustomDiceRowView: View {
                                     .background(Color.green.opacity(0.7))
                                     .clipShape(Circle())
                             }
+                            .buttonStyle(PlainButtonStyle())
                             
                             Spacer()
                         }
                     }
                     
-                    // Roll Type
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Roll Type")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                        
-                        Picker("Roll Type", selection: $config.rollType) {
-                            ForEach(RollType.allCases, id: \.self) { rollType in
-                                Text(rollType.rawValue).tag(rollType)
-                            }
-                        }
-                        .pickerStyle(MenuPickerStyle())
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.red.opacity(0.3))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(Color.red.opacity(0.5), lineWidth: 1)
-                                )
-                        )
-                    }
                 }
                 .padding(.leading, 20)
                 .transition(.opacity.combined(with: .move(edge: .top)))
@@ -3056,14 +3412,9 @@ struct DiceSetupView: View {
                         }
                         
                         HStack {
-                            Text("Roll Type:")
+                            Text("Number of Dice:")
                             Spacer()
-                            Picker("Roll Type", selection: $config.rollType) {
-                                ForEach(RollType.allCases, id: \.self) { rollType in
-                                    Text(rollType.rawValue).tag(rollType)
-                                }
-                            }
-                            .pickerStyle(MenuPickerStyle())
+                            Stepper("\(config.numberOfDice)", value: $config.numberOfDice, in: 1...10)
                         }
                     }
                     .padding(.vertical, 4)
