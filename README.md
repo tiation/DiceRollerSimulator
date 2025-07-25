@@ -295,38 +295,38 @@ This app has been tested with:
 
 ### 🏠 Main Interface - Choose Your Path
 <div align="center">
-  <img src="/Users/tiaastor/Desktop/dice_dmplayerscreen.png" alt="Player and Dungeon Master Selection" width="400">
+  <img src="screenshots/home_screen.png" alt="Player and Dungeon Master Selection" width="400">
   <p><em>Choose between Player (Hero) and Dungeon Master (Weaver of Fates) roles</em></p>
 </div>
 
-### ⚔️ Player Configuration
+### ⚔️ Player Interface with Dark Mode
 <div align="center">
-  <img src="/Users/tiaastor/Desktop/player_config.png" alt="Player Dice Configuration" width="400">
-  <p><em>Hero-themed dice configuration with 25 customizable slots</em></p>
+  <img src="screenshots/player_view.png" alt="Player Dice Configuration" width="400">
+  <p><em>Hero-themed dice configuration with dark mode default and reorderable Hero Rolls</em></p>
+</div>
+
+### 🛡️ Hero Rolls Configuration
+<div align="center">
+  <img src="screenshots/hero_rolls_expanded.png" alt="Hero Rolls Expanded" width="400">
+  <p><em>Expandable Hero Roll configuration with number of dice, modifiers, and dice types</em></p>
 </div>
 
 ### 🧙‍♂️ Dungeon Master Interface
 <div align="center">
-  <img src="/Users/tiaastor/Desktop/dm_expanded_dice_view.png" alt="DM Expanded Dice View" width="400">
-  <p><em>Mystical Dungeon Master interface with expanded dice configuration</em></p>
+  <img src="screenshots/dungeon_master_view.png" alt="Dungeon Master Interface" width="400">
+  <p><em>Mystical Dungeon Master interface with purple theming and reorderable Fate Rolls</em></p>
 </div>
 
-### 🎲 Fate Roll Result
+### 🔮 Fate Rolls Configuration
 <div align="center">
-  <img src="/Users/tiaastor/Desktop/fate_roll.png" alt="Fate Roll Result" width="400">
-  <p><em>Dramatic roll result display with Middle-earth theming</em></p>
+  <img src="screenshots/fate_rolls_expanded.png" alt="Fate Rolls Expanded" width="400">
+  <p><em>Enhanced Fate Roll configuration with improved text visibility and dark color scheme</em></p>
 </div>
 
 ### 🎯 General Dice Roller
 <div align="center">
-  <img src="/Users/tiaastor/Desktop/general_dice.png" alt="General Dice Interface" width="400">
-  <p><em>Quick access general dice roller with roll history</em></p>
-</div>
-
-### 📜 Roll Chronicle (Log)
-<div align="center">
-  <img src="/Users/tiaastor/Desktop/rool_log.png" alt="Roll Log History" width="400">
-  <p><em>Comprehensive roll history with timestamps and details</em></p>
+  <img src="screenshots/general_dice_view.png" alt="General Dice Interface" width="400">
+  <p><em>Quick access general dice roller with comprehensive roll history</em></p>
 </div>
 
 ---

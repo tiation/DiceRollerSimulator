@@ -457,6 +457,7 @@ struct GeneralDiceView: View {
                 Text("🎲 General Dice Roller")
                     .font(.largeTitle)
                     .fontWeight(.bold)
+                    .foregroundColor(.primary)
                     .padding()
                 
                 Text("Quick access to all dice rolling functions")
@@ -466,7 +467,9 @@ struct GeneralDiceView: View {
                 
                 Picker("Dice Type", selection: $selectedDice) {
                     ForEach(DiceType.allCases, id: \.self) { diceType in
-                        Text(diceType.rawValue).tag(diceType)
+                        Text(diceType.rawValue)
+                            .foregroundColor(.primary)
+                            .tag(diceType)
                     }
                 }
                 .pickerStyle(SegmentedPickerStyle())
@@ -474,35 +477,44 @@ struct GeneralDiceView: View {
                 
                 HStack {
                     Text("Number of Dice")
+                        .foregroundColor(.primary)
+                        .fontWeight(.medium)
                     Spacer()
                     Stepper(value: $numberOfDice, in: 1...10) {
                         Text("\(numberOfDice)")
+                            .foregroundColor(.primary)
+                            .fontWeight(.semibold)
                     }
                 }
                 .padding(.horizontal)
                 
                 HStack {
                     Text("Modifier")
+                        .foregroundColor(.primary)
+                        .fontWeight(.medium)
                     Spacer()
                     Stepper(value: $modifier, in: -10...10) {
-                        Text("\(modifier)")
+                        Text("\(modifier >= 0 ? "+" : "")\(modifier)")
+                            .foregroundColor(.primary)
+                            .fontWeight(.semibold)
                     }
                 }
                 .padding(.horizontal)
                 
-                Button("Roll") {
+                Button("Roll Dice") {
                     rollDice()
                 }
                 .buttonStyle(.borderedProminent)
+                .controlSize(.large)
                 .padding()
             }
+            .padding(.vertical)
             .background(
-                LinearGradient(
-                    gradient: Gradient(colors: [Color.blue.opacity(0.05), Color.gray.opacity(0.02)]),
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(UIColor.systemBackground))
+                    .shadow(color: .primary.opacity(0.1), radius: 5, x: 0, y: 2)
             )
+            .padding(.horizontal)
             
             // Divider
             Divider()
@@ -613,6 +625,8 @@ struct ContentView: View {
     @State private var navigateToUserDetails = false
     @State private var showingDiceAnimation = false
     @State private var diceRotation: Double = 0
+    @State private var showStartAdventureButton = false
+    @State private var hasNavigated = false
     
     var body: some View {
         NavigationView {
@@ -626,7 +640,14 @@ struct ContentView: View {
     private var mainContent: some View {
         VStack(spacing: 30) {
             titleSection
-            userTypeButtons
+            if !hasNavigated {
+                userTypeButtons
+            } else {
+                VStack(spacing: 20) {
+                    diceAnimationView
+                    startAdventureButton
+                }
+            }
             Spacer()
         }
         .background(backgroundGradient)
@@ -716,6 +737,83 @@ struct ContentView: View {
         .buttonStyle(PlainButtonStyle())
     }
     
+    private var diceAnimationView: some View {
+        VStack(spacing: 20) {
+            Text("\(selectedUserType == .player ? "⚔️" : "🧙‍♂️")")
+                .font(.system(size: 60))
+                .rotationEffect(.degrees(diceRotation))
+                .scaleEffect(showingDiceAnimation ? 1.2 : 1.0)
+                .animation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true), value: showingDiceAnimation)
+            
+            Text("Preparing your \(selectedUserType == .player ? "Hero" : "Dungeon Master") adventure...")
+                .font(.title2)
+                .foregroundColor(.primary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+        }
+        .padding()
+    }
+    
+    private var startAdventureButton: some View {
+        VStack(spacing: 15) {
+            Button(action: {
+                navigateToUserDetails = true
+            }) {
+                HStack {
+                    Text("🗺️")
+                        .font(.title2)
+                    Text("Start Your Adventure")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.green.opacity(0.8), Color.green.opacity(0.6)]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .foregroundColor(.white)
+                .cornerRadius(15)
+                .shadow(radius: 5)
+            }
+            
+            Button(action: {
+                // Reset to initial state
+                hasNavigated = false
+                showingDiceAnimation = false
+                showStartAdventureButton = false
+                diceRotation = 0
+                selectedUserType = nil
+            }) {
+                HStack {
+                    Text("↩️")
+                        .font(.title2)
+                    Text("Choose Different Path")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                }
+                .padding(.vertical, 12)
+                .padding(.horizontal, 20)
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.gray.opacity(0.6), Color.gray.opacity(0.4)]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .foregroundColor(.white)
+                .cornerRadius(12)
+                .shadow(radius: 3)
+            }
+        }
+        .padding(.horizontal, 30)
+        .opacity(showStartAdventureButton ? 1 : 0)
+        .animation(.easeInOut(duration: 0.5), value: showStartAdventureButton)
+    }
+    
     private var backgroundGradient: some View {
         LinearGradient(
             gradient: Gradient(colors: [Color.black.opacity(0.05), Color.gray.opacity(0.1)]),
@@ -735,6 +833,9 @@ struct ContentView: View {
     }
     
     private func triggerDiceRollAndNavigate() {
+        // Mark that we've started navigation process
+        hasNavigated = true
+        
         // Start dice rolling animation
         showingDiceAnimation = true
         playDiceRollSound()
@@ -744,27 +845,34 @@ struct ContentView: View {
             diceRotation = 1080 // 3 full rotations
         }
         
-        // Navigate after animation completes
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+        // Show start adventure button after animation (faster)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             showingDiceAnimation = false
-            navigateToUserDetails = true
+            showStartAdventureButton = true
         }
     }
     
     private func playDiceRollSound() {
-        // Play system sound for dice rolling
-        // Using system sounds that are available on iOS
-        let soundID: SystemSoundID = 1103 // Mail sent sound - closest to dice rolling
+        // Play dice rolling sound sequence
+        let soundID: SystemSoundID = 1103 // Initial roll sound
         AudioServicesPlaySystemSound(soundID)
         
-        // Play additional sound after a delay for rolling effect
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-            AudioServicesPlaySystemSound(1004) // SMS received sound
+        // Rolling sounds sequence
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            AudioServicesPlaySystemSound(1004) // Rolling sound 1
         }
         
-        // Final "result" sound
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
-            AudioServicesPlaySystemSound(1016) // SMS alert sound
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            AudioServicesPlaySystemSound(1007) // Rolling sound 2
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            AudioServicesPlaySystemSound(1004) // Rolling sound 3
+        }
+        
+        // Final "success" sound when dice stop
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            AudioServicesPlaySystemSound(1016) // Success/completion sound
         }
     }
     
@@ -1247,8 +1355,8 @@ struct PlayerView: View {
                         )
                         rollLogger.addRoll(diceRoll)
                         
-                        // After animation, show result
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                        // After animation, show result (faster)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                             showingRollAnimation = false
                             lastRollResult = "⚔️ \(config.name): \(finalResult) (\(config.diceType.rawValue)\(config.modifier >= 0 ? "+" : "")\(config.modifier))"
                             showingRollResult = true
@@ -1285,6 +1393,7 @@ struct PlayerView: View {
                     .animation(.easeInOut(duration: 0.2), value: selectedRowId == config.id)
                 }
                 .onDelete(perform: deleteHeroRoll)
+                .onMove(perform: moveHeroRoll)
             }
             .listStyle(PlainListStyle())
             .background(Color.clear)
@@ -1293,15 +1402,16 @@ struct PlayerView: View {
         .background(
             LinearGradient(
                 gradient: Gradient(colors: [
-                    Color.black,
+                    Color(UIColor.systemBackground),
                     Color.red.opacity(0.4),
-                    Color.black.opacity(0.8),
+                    Color(UIColor.systemBackground).opacity(0.8),
                     Color.red.opacity(0.2)
                 ]),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         )
+        .preferredColorScheme(.dark)
         .alert("The Dice Have Spoken!", isPresented: $showingRollResult) {
             Button("So it is written") { 
                 showingRollAnimation = false
@@ -1326,7 +1436,7 @@ struct PlayerView: View {
                             .foregroundColor(.red)
                             .rotationEffect(.degrees(showingRollAnimation ? 360 : 0))
                             .animation(
-                                .easeInOut(duration: 0.6).repeatCount(2, autoreverses: false),
+                                .easeInOut(duration: 0.3).repeatCount(2, autoreverses: false),
                                 value: showingRollAnimation
                             )
                         Text("⚔️ Rolling... ⚔️")
@@ -1411,7 +1521,7 @@ struct PlayerView: View {
         // Show animation and result
         showingRollAnimation = true
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
             showingRollAnimation = false
             let displaySides = quickRoll.sides == 0 ? "d?" : "d\(quickRoll.sides)"
             lastRollResult = "⚡ \(quickRoll.name): \(finalTotal) (\(quickRoll.dice)\(displaySides)\(quickRoll.modifier >= 0 ? "+" : "")\(quickRoll.modifier))"
@@ -1553,6 +1663,7 @@ struct DungeonMasterView: View {
                     .padding(.vertical, 2)
                 }
                 .onDelete(perform: deleteFateRoll)
+                .onMove(perform: moveFateRoll)
             }
             .listStyle(PlainListStyle())
             .background(Color.clear)
@@ -1561,15 +1672,16 @@ struct DungeonMasterView: View {
         .background(
             LinearGradient(
                 gradient: Gradient(colors: [
-                    Color.black,
+                    Color(UIColor.systemBackground),
                     Color.purple.opacity(0.4),
-                    Color.black.opacity(0.8),
+                    Color(UIColor.systemBackground).opacity(0.8),
                     Color.purple.opacity(0.2)
                 ]),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         )
+        .preferredColorScheme(.dark)
         .alert("The Dice Have Spoken!", isPresented: $showingRollResult) {
             Button("So it is written") { 
                 showingRollAnimation = false
@@ -1594,7 +1706,7 @@ struct DungeonMasterView: View {
                             .foregroundColor(.yellow)
                             .rotationEffect(.degrees(showingRollAnimation ? 360 : 0))
                             .animation(
-                                .easeInOut(duration: 0.8).repeatCount(2, autoreverses: false),
+                                .easeInOut(duration: 0.4).repeatCount(2, autoreverses: false),
                                 value: showingRollAnimation
                             )
                         Text("✨ Rolling... ✨")
@@ -1623,21 +1735,23 @@ struct DungeonMasterView: View {
         showingRollAnimation = true
         
         // Add to rollLogger
+        let results = (0..<config.numberOfDice).map { _ in Int.random(in: 1...config.diceType.sides) }
+        let total = results.reduce(0, +)
         let diceRoll = DiceRoll(
             diceType: config.diceType.sides,
-            numberOfDice: 1,
-            results: [result - config.modifier],
-            total: result - config.modifier,
+            numberOfDice: config.numberOfDice,
+            results: results,
+            total: total,
             modifier: config.modifier,
-            finalTotal: result,
+            finalTotal: total + config.modifier,
             rollType: .normal,
             description: config.name,
             timestamp: Date()
         )
         rollLogger.addRoll(diceRoll)
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
-            let rollDescription = "⚔️ \(config.name): \(result) (\(config.diceType.rawValue)\(config.modifier >= 0 ? "+" : "")\(config.modifier))"
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            let rollDescription = "⚔️ \(config.name): \(result) (\(config.numberOfDice)\(config.diceType.rawValue)\(config.modifier >= 0 ? "+" : "")\(config.modifier))"
             lastRollResult = rollDescription
             showingRollAnimation = false
             showingRollResult = true
@@ -1682,7 +1796,7 @@ struct DungeonMasterView: View {
         // Show animation and result
         showingRollAnimation = true
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
             showingRollAnimation = false
             let displaySides = quickRoll.sides == 0 ? "d?" : "d\(quickRoll.sides)"
             lastRollResult = "⚡ \(quickRoll.name): \(finalTotal) (\(quickRoll.dice)\(displaySides)\(quickRoll.modifier >= 0 ? "+" : "")\(quickRoll.modifier))"
@@ -1778,19 +1892,19 @@ struct DungeonMasterDiceRowView: View {
                 .buttonStyle(PlainButtonStyle())
                 .accessibilityLabel(isExpanded ? "Collapse dice settings" : "Expand dice settings")
                 
-                // Enhanced Name field with hero styling
-                TextField("Hero Roll Name", text: $config.name)
+                // Enhanced Name field with fate styling
+                TextField("Fate Roll Name", text: $config.name)
                     .textFieldStyle(PlainTextFieldStyle())
-                    .foregroundColor(.primary)
+                    .foregroundColor(.black)
                     .font(.system(size: 16, weight: .semibold))
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                     .background(
                         RoundedRectangle(cornerRadius: 6)
-                            .fill(Color.white.opacity(0.9))
+                            .fill(Color.white.opacity(0.95))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 6)
-                                    .stroke(Color.red.opacity(0.4), lineWidth: 1)
+                                    .stroke(Color.purple.opacity(0.4), lineWidth: 1)
                             )
                     )
                     .accessibilityLabel("Roll name: \(config.name)")
@@ -1799,28 +1913,28 @@ struct DungeonMasterDiceRowView: View {
                 
                 // Enhanced Quick Info with readable styling
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text("\(config.diceType.rawValue)")
+                    Text("\(config.numberOfDice)\(config.diceType.rawValue)")
                         .font(.caption)
                         .fontWeight(.bold)
-                        .foregroundColor(.red)
+                        .foregroundColor(.purple)
                     Text("\(config.modifier >= 0 ? "+" : "")\(config.modifier)")
                         .font(.caption2)
-                        .foregroundColor(.primary)
+                        .foregroundColor(.black)
                 }
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
                 .background(
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.white.opacity(0.8))
+                        .fill(Color.white.opacity(0.95))
                         .overlay(
                             RoundedRectangle(cornerRadius: 4)
-                                .stroke(Color.red.opacity(0.3), lineWidth: 1)
+                                .stroke(Color.purple.opacity(0.3), lineWidth: 1)
                         )
                 )
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("Dice: \(config.diceType.rawValue), Modifier: \(config.modifier >= 0 ? "+" : "")\(config.modifier)")
                 
-                // Enhanced Roll Button with hero styling
+                // Enhanced Roll Button
                 Button(action: {
                     if !isExpanded {
                         // Set selected state briefly to show visual feedback
@@ -1828,8 +1942,10 @@ struct DungeonMasterDiceRowView: View {
                             isSelected = true
                         }
                         
-                        let baseRoll = Int.random(in: 1...config.diceType.sides)
-                        let finalResult = baseRoll + config.modifier
+                        // Roll multiple dice if numberOfDice > 1
+                        let results: [Int] = (0..<config.numberOfDice).map { _ in Int.random(in: 1...config.diceType.sides) }
+                        let baseTotal = results.reduce(0, +)
+                        let finalResult = baseTotal + config.modifier
                         onRoll(finalResult)
                         
                         // Clear selection after brief delay
@@ -1988,19 +2104,13 @@ struct DungeonMasterDiceRowView: View {
                             
                             Text("\(config.modifier >= 0 ? "+" : "")\(config.modifier)")
                                 .font(.system(size: 18, weight: .bold))
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [Color.white, Color.yellow.opacity(0.8)]),
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
+                                .foregroundColor(.black)
                                 .frame(minWidth: 50)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 6)
                                 .background(
                                     RoundedRectangle(cornerRadius: 8)
-                                        .fill(Color.black.opacity(0.5))
+                                        .fill(Color.white.opacity(0.9))
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 8)
                                                 .stroke(Color.purple.opacity(0.4), lineWidth: 1)
@@ -2012,6 +2122,91 @@ struct DungeonMasterDiceRowView: View {
                                 if config.modifier < 10 {
                                     withAnimation(.easeInOut(duration: 0.1)) {
                                         config.modifier += 1
+                                    }
+                                }
+                            }) {
+                                ZStack {
+                                    Circle()
+                                        .fill(
+                                            LinearGradient(
+                                                gradient: Gradient(colors: [Color.green.opacity(0.8), Color.blue.opacity(0.6)]),
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                        .frame(width: 32, height: 32)
+                                        .shadow(color: .green.opacity(0.4), radius: 2, x: 0, y: 1)
+                                    
+                                    Image(systemName: "plus")
+                                        .foregroundColor(.white)
+                                        .font(.system(size: 14, weight: .bold))
+                                }
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            
+                            Spacer()
+                        }
+                    }
+                    
+                    // Number of Dice (for Dungeon Master)
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Image(systemName: "dice")
+                                .foregroundColor(.orange)
+                                .font(.system(size: 14))
+                            Text("Number of Dice")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.orange)
+                        }
+                        
+                        HStack(spacing: 16) {
+                            Button(action: {
+                                if config.numberOfDice > 1 {
+                                    withAnimation(.easeInOut(duration: 0.1)) {
+                                        config.numberOfDice -= 1
+                                    }
+                                }
+                            }) {
+                                ZStack {
+                                    Circle()
+                                        .fill(
+                                            LinearGradient(
+                                                gradient: Gradient(colors: [Color.red.opacity(0.8), Color.orange.opacity(0.6)]),
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                        .frame(width: 32, height: 32)
+                                        .shadow(color: .red.opacity(0.4), radius: 2, x: 0, y: 1)
+                                    
+                                    Image(systemName: "minus")
+                                        .foregroundColor(.white)
+                                        .font(.system(size: 14, weight: .bold))
+                                }
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            
+                            Text("\(config.numberOfDice)")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(.black)
+                                .frame(minWidth: 50)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(Color.white.opacity(0.9))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .stroke(Color.purple.opacity(0.4), lineWidth: 1)
+                                        )
+                                )
+                                .shadow(color: .purple.opacity(0.3), radius: 2, x: 0, y: 1)
+                            
+                            Button(action: {
+                                if config.numberOfDice < 10 {
+                                    withAnimation(.easeInOut(duration: 0.1)) {
+                                        config.numberOfDice += 1
                                     }
                                 }
                             }) {
@@ -2179,7 +2374,59 @@ struct CustomDiceRowView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Number of Dice")
                             .font(.caption)
-                            .foregroundColor(.gray)
+                            .foregroundColor(.orange)
+                        
+                        HStack {
+                            Button(action: {
+                                if config.numberOfDice > 1 {
+                                    config.numberOfDice -= 1
+                                }
+                            }) {
+                                Image(systemName: "minus")
+                                    .foregroundColor(.white)
+                                    .padding(8)
+                                    .background(Color.red.opacity(0.7))
+                                    .clipShape(Circle())
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            
+                            Text("\(config.numberOfDice)")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white)
+                                .frame(minWidth: 40)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .fill(Color.black.opacity(0.3))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 6)
+                                                .stroke(Color.red.opacity(0.4), lineWidth: 1)
+                                        )
+                                )
+                            
+                            Button(action: {
+                                if config.numberOfDice < 10 {
+                                    config.numberOfDice += 1
+                                }
+                            }) {
+                                Image(systemName: "plus")
+                                    .foregroundColor(.white)
+                                    .padding(8)
+                                    .background(Color.green.opacity(0.7))
+                                    .clipShape(Circle())
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            
+                            Spacer()
+                        }
+                    }
+                    
+                    // Modifier
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Modifier")
+                            .font(.caption)
+                            .foregroundColor(.orange)
                         
                         HStack {
                             Button(action: {
@@ -2355,9 +2602,10 @@ struct LogView: View {
                     .scrollContentBackground(.hidden)
                 }
             }
-            .background(
-                Color.black
-            )
+        .background(
+            Color(UIColor.systemBackground)
+        )
+        .preferredColorScheme(.dark)
             .navigationBarHidden(true)
         }
     }
@@ -2461,15 +2709,16 @@ struct DMHistoryView: View {
             .background(
                 LinearGradient(
                     gradient: Gradient(colors: [
-                        Color.black,
+                        Color(UIColor.systemBackground),
                         Color.purple.opacity(0.3),
-                        Color.black.opacity(0.8),
+                        Color(UIColor.systemBackground).opacity(0.8),
                         Color.purple.opacity(0.2)
                     ]),
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
             )
+            .preferredColorScheme(.dark)
             .navigationBarHidden(true)
             .overlay(
                 // Custom navigation bar
@@ -2933,19 +3182,35 @@ struct EnhancedCustomDiceRowView: View {
                 Spacer()
                 
                 // Quick Info
-                Text("\(config.diceType.rawValue)\(config.modifier >= 0 ? "+" : "")\(config.modifier)")
-                    .font(.caption)
-                    .foregroundColor(isSelected ? .white : .gray)
-                    .fontWeight(isSelected ? .semibold : .regular)
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text("\(config.numberOfDice)\(config.diceType.rawValue)")
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                            Text("\(config.modifier >= 0 ? "+" : "")\(config.modifier)")
+                                .font(.caption2)
+                                .foregroundColor(.white.opacity(0.9))
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Color.black.opacity(0.7))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .stroke(isSelected ? Color.red.opacity(0.8) : Color.red.opacity(0.4), lineWidth: 1)
+                                )
+                        )
                 
                 // Enhanced Roll Button
                 Button(action: {
                     // Only roll if not expanded for editing
                     if !isExpanded {
                         onTap()
-                        let baseRoll = Int.random(in: 1...config.diceType.sides)
-                        let finalResult = baseRoll + config.modifier
-                        onRoll(baseRoll, finalResult)
+                        let results: [Int] = (0..<config.numberOfDice).map { _ in Int.random(in: 1...config.diceType.sides) }
+                        let baseTotal = results.reduce(0, +)
+                        let finalResult = baseTotal + config.modifier
+                        onRoll(baseTotal, finalResult)
                     }
                 }) {
                     ZStack {
@@ -3059,6 +3324,64 @@ struct EnhancedCustomDiceRowView: View {
                             Button(action: {
                                 if config.modifier < 10 {
                                     config.modifier += 1
+                                }
+                            }) {
+                                Image(systemName: "plus")
+                                    .foregroundColor(.white)
+                                    .padding(8)
+                                    .background(Color.green.opacity(0.7))
+                                    .clipShape(Circle())
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            
+                            Spacer()
+                        }
+                    }
+                    
+                    // Number of Dice
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Image(systemName: "dice")
+                                .foregroundColor(.orange)
+                                .font(.system(size: 14))
+                            Text("Number of Dice")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.orange)
+                        }
+                        
+                        HStack {
+                            Button(action: {
+                                if config.numberOfDice > 1 {
+                                    config.numberOfDice -= 1
+                                }
+                            }) {
+                                Image(systemName: "minus")
+                                    .foregroundColor(.white)
+                                    .padding(8)
+                                    .background(Color.red.opacity(0.7))
+                                    .clipShape(Circle())
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            
+                            Text("\(config.numberOfDice)")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white)
+                                .frame(minWidth: 40)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .fill(Color.black.opacity(0.3))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 6)
+                                                .stroke(Color.red.opacity(0.4), lineWidth: 1)
+                                        )
+                                )
+                            
+                            Button(action: {
+                                if config.numberOfDice < 10 {
+                                    config.numberOfDice += 1
                                 }
                             }) {
                                 Image(systemName: "plus")
