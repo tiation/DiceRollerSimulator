@@ -179,7 +179,10 @@ The latest IPA build of Dice Of Middle-Earth is available through two installati
 3. Install the app through TestFlight
 
 ### Side-loading
-1. Download the latest IPA release from our [GitHub Releases page](https://github.com/tiation/tiation-dice-roller-ios/releases)
+1. Get the IPA file:
+   - Latest release: [`artifacts/DiceRollerSimulator.ipa`](artifacts/DiceRollerSimulator.ipa)
+   - Development build: [`build/ipa/DiceRollerSimulator.ipa`](build/ipa/DiceRollerSimulator.ipa)
+   - Or download from our [GitHub Releases page](https://github.com/tiation/tiation-dice-roller-ios/releases)
 2. Install via Xcode or your preferred iOS deployment tool (e.g., AltStore)
 3. Trust the developer certificate in iOS Settings
 
