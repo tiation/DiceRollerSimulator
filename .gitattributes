@@ -1,0 +1,20 @@
+# iOS binary files
+*.ipa binary
+*.xcarchive binary
+*.app binary
+*.dSYM binary
+
+# Images
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+
+# Archives
+*.zip binary
+*.tar.gz binary
+
+# iOS specific binaries
+*.framework binary
+*.xcframework binary
