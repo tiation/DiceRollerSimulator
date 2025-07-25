@@ -1459,6 +1459,7 @@ struct DungeonMasterDiceRowView: View {
     let onRoll: (Int) -> Void
     
     @State private var isExpanded = false
+    @State private var isSelected = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -1480,10 +1481,6 @@ struct DungeonMasterDiceRowView: View {
                         )
                         .font(.system(size: 16))
                         .shadow(color: .orange.opacity(0.5), radius: 2, x: 0, y: 1)
-                }
-                .buttonStyle(PlainButtonStyle())
-                .accessibilityLabel(isExpanded ? "Collapse dice settings" : "Expand dice settings")
-     .shadow(color: .red.opacity(0.5), radius: 2, x: 0, y: 1)
                 }
                 .buttonStyle(PlainButtonStyle())
                 .accessibilityLabel(isExpanded ? "Collapse dice settings" : "Expand dice settings")
@@ -1533,10 +1530,21 @@ struct DungeonMasterDiceRowView: View {
                 // Enhanced Roll Button with hero styling
                 Button(action: {
                     if !isExpanded {
-                        onTap()
+                        // Set selected state briefly to show visual feedback
+                        withAnimation(.easeInOut(duration: 0.1)) {
+                            isSelected = true
+                        }
+                        
                         let baseRoll = Int.random(in: 1...config.diceType.sides)
                         let finalResult = baseRoll + config.modifier
-                        onRoll(baseRoll, finalResult)
+                        onRoll(finalResult)
+                        
+                        // Clear selection after brief delay
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                            withAnimation(.easeInOut(duration: 0.1)) {
+                                isSelected = false
+                            }
+                        }
                     }
                 }) {
                     ZStack {
@@ -2997,6 +3005,80 @@ struct PlayerRollResultModal: View {
                 endPoint: .bottom
             )
         )
+    }
+}
+
+struct PlayerDiceRowView: View {
+    @Binding var config: CustomDiceConfig
+    let isSelected: Bool
+    let onTap: () -> Void
+    let onRoll: (Int, Int) -> Void // baseRoll, finalResult
+    
+    @State private var isExpanded = false
+    
+    var body: some View {
+        EnhancedCustomDiceRowView(
+            config: $config,
+            isSelected: isSelected,
+            onTap: onTap,
+            onRoll: onRoll
+        )
+    }
+}
+
+struct DiceSetupView: View {
+    @Binding var configs: [CustomDiceConfig]
+    @Environment(\.presentationMode) var presentationMode
+    
+    var body: some View {
+        NavigationView {
+            List {
+                ForEach($configs) { $config in
+                    VStack(alignment: .leading, spacing: 8) {
+                        TextField("Roll Name", text: $config.name)
+                            .font(.headline)
+                        
+                        HStack {
+                            Text("Dice Type:")
+                            Spacer()
+                            Picker("Dice Type", selection: $config.diceType) {
+                                ForEach(DiceType.allCases, id: \.self) { diceType in
+                                    Text(diceType.rawValue).tag(diceType)
+                                }
+                            }
+                            .pickerStyle(MenuPickerStyle())
+                        }
+                        
+                        HStack {
+                            Text("Modifier:")
+                            Spacer()
+                            Stepper("\(config.modifier >= 0 ? "+" : "")\(config.modifier)", value: $config.modifier, in: -10...10)
+                        }
+                        
+                        HStack {
+                            Text("Roll Type:")
+                            Spacer()
+                            Picker("Roll Type", selection: $config.rollType) {
+                                ForEach(RollType.allCases, id: \.self) { rollType in
+                                    Text(rollType.rawValue).tag(rollType)
+                                }
+                            }
+                            .pickerStyle(MenuPickerStyle())
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+            .navigationTitle("Dice Setup")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                }
+            }
+        }
     }
 }
 
