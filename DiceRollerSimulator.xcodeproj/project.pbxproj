@@ -11,9 +11,11 @@
 		1234567A1234567A1234567A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1234567B1234567B1234567B /* ContentView.swift */; };
 		1234568C1234568C1234568C /* dice_shaking_waiting_Screen.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 1234568D1234568D1234568D /* dice_shaking_waiting_Screen.mp3 */; };
 		1234568E1234568E1234568E /* RPG_Dice_Rolling.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 1234568F1234568F1234568F /* RPG_Dice_Rolling.mp3 */; };
+		61F5A6366646DBD2D9DD66A2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0120863ADA7A607EE673D574 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0120863ADA7A607EE673D574 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		123456791234567912345679 /* DiceRollerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiceRollerApp.swift; sourceTree = "<group>"; };
 		1234567B1234567B1234567B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		1234567C1234567C1234567C /* DiceRollerSimulator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DiceRollerSimulator.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -38,6 +40,7 @@
 			children = (
 				123456801234568012345680 /* DiceRollerSimulator */,
 				123456811234568112345681 /* Products */,
+				0120863ADA7A607EE673D574 /* Assets.xcassets */,
 			);
 			sourceTree = "<group>";
 		};
@@ -130,6 +133,7 @@
 			files = (
 				1234568C1234568C1234568C /* dice_shaking_waiting_Screen.mp3 in Resources */,
 				1234568E1234568E1234568E /* RPG_Dice_Rolling.mp3 in Resources */,
+				61F5A6366646DBD2D9DD66A2 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

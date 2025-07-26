@@ -672,14 +672,37 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             ZStack {
+                // Dark background
+                Color.black
+                    .ignoresSafeArea()
+                
                 mainContent
                 hiddenNavigationLink
             }
+        }
+        .preferredColorScheme(.dark)
+    }
+    
+    private var infoLink: some View {
+        NavigationLink(destination: InfoView()) {
+            HStack {
+                Image(systemName: "book.fill")
+                Text("Dice of Middle-Earth Specs")
+            }
+            .foregroundColor(.white)
+            .padding()
+            .background(Color.white.opacity(0.1))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+            )
+            .cornerRadius(10)
         }
     }
     
     private var mainContent: some View {
         VStack(spacing: 30) {
+            infoLink
             titleSection
             if !hasNavigated {
                 userTypeButtons
@@ -691,23 +714,34 @@ struct ContentView: View {
             }
             Spacer()
         }
-        .background(backgroundGradient)
     }
     
     private var titleSection: some View {
-        VStack(spacing: 8) {
-            Text("🧙‍♂️ Dice Of Middle-Earth")
-                .font(.largeTitle)
-                .fontWeight(.bold)
+        VStack(spacing: 12) {
+            Text("🧙‍♂️")
+                .font(.system(size: 60))
+                .shadow(color: .purple.opacity(0.6), radius: 15)
+            
+            Text("Dice Of Middle-Earth")
+                .font(.system(size: 36, weight: .bold, design: .serif))
                 .multilineTextAlignment(.center)
-                .foregroundColor(.primary)
-                .padding(.top, 40)
+                .foregroundStyle(
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.white, Color.gray.opacity(0.9)]),
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .shadow(color: .purple.opacity(0.5), radius: 10)
             
             Text("Choose Your Path")
-                .font(.title2)
-                .foregroundColor(.secondary)
-                .padding(.bottom, 20)
+                .font(.title3)
+                .fontWeight(.medium)
+                .foregroundColor(.gray.opacity(0.7))
+                .italic()
+                .padding(.bottom, 10)
         }
+        .padding(.top, 20)
     }
     
     private var userTypeButtons: some View {
@@ -731,19 +765,24 @@ struct ContentView: View {
                     .fontWeight(.bold)
                 Text("Hero of the Realm")
                     .font(.caption)
+                    .opacity(0.8)
             }
             .padding(30)
             .frame(maxWidth: .infinity)
             .background(
                 LinearGradient(
-                    gradient: Gradient(colors: [Color.red.opacity(0.8), Color.red.opacity(0.6)]),
+                    gradient: Gradient(colors: [Color.red.opacity(0.7), Color.red.opacity(0.5)]),
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
             )
             .foregroundColor(.white)
             .cornerRadius(15)
-            .shadow(radius: 5)
+            .shadow(color: .red.opacity(0.4), radius: 8, x: 0, y: 4)
+            .overlay(
+                RoundedRectangle(cornerRadius: 15)
+                    .stroke(Color.red.opacity(0.3), lineWidth: 1)
+            )
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -761,19 +800,24 @@ struct ContentView: View {
                     .fontWeight(.bold)
                 Text("Weaver of Fates")
                     .font(.caption)
+                    .opacity(0.8)
             }
             .padding(30)
             .frame(maxWidth: .infinity)
             .background(
                 LinearGradient(
-                    gradient: Gradient(colors: [Color.purple.opacity(0.8), Color.purple.opacity(0.6)]),
+                    gradient: Gradient(colors: [Color.purple.opacity(0.7), Color.purple.opacity(0.5)]),
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
             )
             .foregroundColor(.white)
             .cornerRadius(15)
-            .shadow(radius: 5)
+            .shadow(color: .purple.opacity(0.4), radius: 8, x: 0, y: 4)
+            .overlay(
+                RoundedRectangle(cornerRadius: 15)
+                    .stroke(Color.purple.opacity(0.3), lineWidth: 1)
+            )
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -788,7 +832,7 @@ struct ContentView: View {
             
             Text("Preparing your \(selectedUserType == .player ? "Hero" : "Dungeon Master") adventure...")
                 .font(.title2)
-                .foregroundColor(.primary)
+                .foregroundColor(.white)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
         }
@@ -811,14 +855,18 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [Color.green.opacity(0.8), Color.green.opacity(0.6)]),
+                        gradient: Gradient(colors: [Color.green.opacity(0.7), Color.green.opacity(0.5)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
                 .foregroundColor(.white)
                 .cornerRadius(15)
-                .shadow(radius: 5)
+                .shadow(color: .green.opacity(0.4), radius: 8, x: 0, y: 4)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 15)
+                        .stroke(Color.green.opacity(0.3), lineWidth: 1)
+                )
             }
             
             Button(action: {
@@ -840,14 +888,18 @@ struct ContentView: View {
                 .padding(.horizontal, 20)
                 .background(
                     LinearGradient(
-                        gradient: Gradient(colors: [Color.gray.opacity(0.6), Color.gray.opacity(0.4)]),
+                        gradient: Gradient(colors: [Color.gray.opacity(0.5), Color.gray.opacity(0.3)]),
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
-                .foregroundColor(.white)
+                .foregroundColor(.white.opacity(0.9))
                 .cornerRadius(12)
-                .shadow(radius: 3)
+                .shadow(color: .gray.opacity(0.3), radius: 4, x: 0, y: 2)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                )
             }
         }
         .padding(.horizontal, 30)
@@ -857,7 +909,7 @@ struct ContentView: View {
     
     private var backgroundGradient: some View {
         LinearGradient(
-            gradient: Gradient(colors: [Color.black.opacity(0.05), Color.gray.opacity(0.1)]),
+            gradient: Gradient(colors: [Color.black, Color.black]),
             startPoint: .top,
             endPoint: .bottom
         )
@@ -1247,6 +1299,7 @@ struct PlayerView: View {
     @State private var showingRollAnimation = false
     @State private var showingCustomModal = false
     @State private var lastRollDetails: RollResultDetails?
+    @State private var showingQuickRollsView = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -1279,14 +1332,35 @@ struct PlayerView: View {
             
             // Quick Rolls Section
             VStack(spacing: 12) {
-                Text("⚡ Quick Rolls")
-                    .font(.headline)
-                    .fontWeight(.bold)
-                    .foregroundColor(.orange)
+                HStack {
+                    Text("⚡ Quick Rolls")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundColor(.orange)
+                    Spacer()
+                    // Quick Rolls Management Buttons
+                    HStack(spacing: 8) {
+                        Button(action: {
+                            showingQuickRollsView = true
+                        }) {
+                            Image(systemName: "slider.horizontal.3")
+                                .font(.system(size: 16))
+                                .foregroundColor(.blue)
+                        }
+                        Button(action: {
+                            showingCustomModal = true
+                        }) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 18))
+                                .foregroundColor(.green)
+                        }
+                    }
+                }
+                .padding(.horizontal)
                 
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
-                        ForEach(quickRollManager.allQuickRolls) { quickRoll in
+                        ForEach(quickRollManager.featuredQuickRolls) { quickRoll in
                             Button(action: {
                                 performQuickRoll(quickRoll)
                             }) {
@@ -1296,7 +1370,7 @@ struct PlayerView: View {
                                         .fontWeight(.semibold)
                                         .foregroundColor(.white)
                                         .lineLimit(1)
-                                    Text("\(quickRoll.dice)d\(quickRoll.sides)\(quickRoll.modifier != 0 ? (quickRoll.modifier > 0 ? "+\(quickRoll.modifier)" : "\(quickRoll.modifier)") : "")")
+                                    Text("\(quickRoll.dice)d\(quickRoll.sides == 0 ? "?" : "\(quickRoll.sides)")\(quickRoll.modifier != 0 ? (quickRoll.modifier > 0 ? "+\(quickRoll.modifier)" : "\(quickRoll.modifier)") : "")")
                                         .font(.caption2)
                                         .foregroundColor(.white.opacity(0.8))
                                 }
@@ -1313,7 +1387,6 @@ struct PlayerView: View {
                                 .shadow(color: .blue.opacity(0.3), radius: 2)
                             }
                         }
-                        .onMove(perform: moveQuickRoll)
                     }
                     .padding(.horizontal)
                 }
@@ -1465,7 +1538,7 @@ struct PlayerView: View {
                     .scaleEffect(selectedRowId == config.id ? 1.02 : 1.0)
                     .animation(.easeInOut(duration: 0.2), value: selectedRowId == config.id)
                 }
-                .onDelete(perform: isEditMode ? deleteHeroRoll : nil)
+                .onDelete(perform: deleteHeroRoll)
                 .onMove(perform: isEditMode ? moveHeroRoll : nil)
             }
             .listStyle(PlainListStyle())
@@ -1496,6 +1569,12 @@ struct PlayerView: View {
         }
         .sheet(isPresented: $showingHistory) {
             HistoryView(rolls: rollLogger.rolls)
+        }
+        .sheet(isPresented: $showingQuickRollsView) {
+            QuickRollsView(quickRollManager: quickRollManager, onRoll: performQuickRoll)
+        }
+        .sheet(isPresented: $showingCustomModal) {
+            CustomRollEditorView(quickRollManager: quickRollManager)
         }
         .overlay(
             // Roll animation overlay
@@ -1552,8 +1631,8 @@ struct PlayerView: View {
     }
     
     private func deleteHeroRoll(at offsets: IndexSet) {
-        // Don't allow deletion if there are only 5 rolls left
-        if customDiceConfigs.count > 5 {
+        // Don't allow deletion if there are only 3 rolls left
+        if customDiceConfigs.count > 3 {
             customDiceConfigs.remove(atOffsets: offsets)
         }
     }
@@ -1610,6 +1689,7 @@ struct DungeonMasterView: View {
     @ObservedObject var quickRollManager: QuickRollManager
     @ObservedObject var soundManager: SoundManager
     
+    @State private var isEditMode = false
     @State private var customDiceConfigs: [CustomDiceConfig] = {
         var configs: [CustomDiceConfig] = []
         for i in 1...5 {
@@ -1629,6 +1709,8 @@ struct DungeonMasterView: View {
     @State private var rollHistory: [String] = []
     @State private var showingHistory = false
     @State private var showingRollAnimation = false
+    @State private var showingQuickRollsView = false
+    @State private var showingCustomModal = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -1665,9 +1747,35 @@ struct DungeonMasterView: View {
                     .fontWeight(.bold)
                     .foregroundColor(.purple)
                 
+                HStack {
+                    Text("⚡ Quick Rolls")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundColor(.purple)
+                    Spacer()
+                    // Quick Rolls Management Buttons
+                    HStack(spacing: 8) {
+                        Button(action: {
+                            showingQuickRollsView = true
+                        }) {
+                            Image(systemName: "slider.horizontal.3")
+                                .font(.system(size: 16))
+                                .foregroundColor(.blue)
+                        }
+                        Button(action: {
+                            showingCustomModal = true
+                        }) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 18))
+                                .foregroundColor(.green)
+                        }
+                    }
+                }
+                .padding(.horizontal)
+                
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
-                        ForEach(quickRollManager.allQuickRolls) { quickRoll in
+                        ForEach(quickRollManager.featuredQuickRolls) { quickRoll in
                             Button(action: {
                                 performQuickRoll(quickRoll)
                             }) {
@@ -1677,7 +1785,7 @@ struct DungeonMasterView: View {
                                         .fontWeight(.semibold)
                                         .foregroundColor(.white)
                                         .lineLimit(1)
-                                    Text("\(quickRoll.dice)d\(quickRoll.sides)\(quickRoll.modifier != 0 ? (quickRoll.modifier > 0 ? "+\(quickRoll.modifier)" : "\(quickRoll.modifier)") : "")")
+                                    Text("\(quickRoll.dice)d\(quickRoll.sides == 0 ? "?" : "\(quickRoll.sides)")\(quickRoll.modifier != 0 ? (quickRoll.modifier > 0 ? "+\(quickRoll.modifier)" : "\(quickRoll.modifier)") : "")")
                                         .font(.caption2)
                                         .foregroundColor(.white.opacity(0.8))
                                 }
@@ -1694,7 +1802,6 @@ struct DungeonMasterView: View {
                                 .shadow(color: .purple.opacity(0.3), radius: 2)
                             }
                         }
-                        .onMove(perform: moveQuickRoll)
                     }
                     .padding(.horizontal)
                 }
@@ -1718,6 +1825,29 @@ struct DungeonMasterView: View {
                     .fontWeight(.bold)
                     .foregroundColor(.purple)
                 Spacer()
+                if customDiceConfigs.count > 1 {
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            isEditMode.toggle()
+                        }
+                    }) {
+                        Text(isEditMode ? "Done" : "Edit")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(isEditMode ? .blue : .orange)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 4)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(isEditMode ? Color.blue.opacity(0.2) : Color.orange.opacity(0.2))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(isEditMode ? Color.blue.opacity(0.4) : Color.orange.opacity(0.4), lineWidth: 1)
+                                    )
+                            )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
                 Button(action: addFateRoll) {
                     Image(systemName: "plus.circle.fill")
                         .font(.title2)
@@ -1739,10 +1869,11 @@ struct DungeonMasterView: View {
                     .padding(.vertical, 2)
                 }
                 .onDelete(perform: deleteFateRoll)
-                .onMove(perform: moveFateRoll)
+                .onMove(perform: isEditMode ? moveFateRoll : nil)
             }
             .listStyle(PlainListStyle())
             .background(Color.clear)
+            .environment(\.editMode, .constant(isEditMode ? EditMode.active : EditMode.inactive))
             
         }
         .background(
@@ -1768,6 +1899,12 @@ struct DungeonMasterView: View {
         }
         .sheet(isPresented: $showingHistory) {
             DMHistoryView(rollHistory: rollHistory)
+        }
+        .sheet(isPresented: $showingQuickRollsView) {
+            QuickRollsView(quickRollManager: quickRollManager, onRoll: performQuickRoll)
+        }
+        .sheet(isPresented: $showingCustomModal) {
+            CustomRollEditorView(quickRollManager: quickRollManager)
         }
         .overlay(
             // Roll animation overlay
@@ -2056,8 +2193,8 @@ struct DungeonMasterView: View {
     }
     
     private func deleteFateRoll(at offsets: IndexSet) {
-        // Don't allow deletion if there are only 5 rolls left
-        if customDiceConfigs.count > 5 {
+        // Don't allow deletion if there are only 3 rolls left
+        if customDiceConfigs.count > 3 {
             customDiceConfigs.remove(atOffsets: offsets)
         }
     }
@@ -3630,6 +3767,9 @@ struct UserDetailsView: View {
                                 if gesture.translation.width > 100 {
                                     // Swipe right - go back to Chronicle
                                     selectedTab = 1
+                                } else if gesture.translation.width < -100 {
+                                    // Swipe left - cycle back to main tab
+                                    selectedTab = 0
                                 }
                             }
                         }
@@ -5148,6 +5288,357 @@ struct DiceSetupView: View {
                 }
             }
         }
+    }
+}
+
+struct InfoView: View {
+    @Environment(\.presentationMode) var presentationMode
+    
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                // Header
+                HStack {
+                    Spacer()
+                    Button(action: {
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title)
+                            .foregroundColor(.gray)
+                    }
+                }
+                .padding(.trailing)
+                
+                Text("🌿 Dice of Middle-Earth")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .padding(.bottom)
+                
+                Text("Unified Technical Specification")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.secondary)
+                
+                Group {
+                    Text("⚔️ Hero Rolls & 🔮 Fate Rolls")
+                        .font(.title3)
+                        .fontWeight(.bold)
+                        .padding(.top)
+                    
+                    Text("A comprehensive system for epic dice rolling adventures. Whether you're a bold hero facing dragons or a shadowy Dungeon Master weaving the world's fate, this guide is your complete reference.")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                }
+                
+                // Core Dice Engine
+                SectionView(title: "🔢 Core Dice Engine") {
+                    SubsectionView(title: "Standard Dice Types") {
+                        BulletPointView(items: [
+                            "d4: Minor effects, light damage",
+                            "d6: Common damage, checks",
+                            "d8: Moderate damage, specific rolls",
+                            "d10: High damage, percentile rolls",
+                            "d12: Heavy damage, rare actions",
+                            "d20: Core resolution die",
+                            "d100: Random tables, loot"
+                        ])
+                    }
+                    
+                    SubsectionView(title: "Dice Mechanics") {
+                        CodeBlockView(code: "Final Result = (Dice Results) + Modifier + Special Mechanics")
+                        BulletPointView(items: [
+                            "Modifiers: -10 to +10",
+                            "Custom Names: Unlimited",
+                            "Max Dice Per Roll: 99"
+                        ])
+                    }
+                    
+                    SubsectionView(title: "Shared Features") {
+                        BulletPointView(items: [
+                            "Drop/Keep highest or lowest",
+                            "Advantage/Disadvantage",
+                            "Reroll mechanics (lowest, threshold)",
+                            "Quick Rolls",
+                            "Roll history: up to 100"
+                        ])
+                    }
+                }
+                
+                // Hero Rolls
+                SectionView(title: "⚔️ Hero Rolls: Player Mode") {
+                    SubsectionView(title: "Overview") {
+                        Text("Player-focused mechanics for attacks, abilities, healing, and heroic flair.")
+                            .font(.body)
+                    }
+                    
+                    SubsectionView(title: "Hero Interface") {
+                        BulletPointView(items: [
+                            "Red Theme",
+                            "Personalized roll slots (up to 25)",
+                            "Sound: RPG_Dice_Rolling"
+                        ])
+                    }
+                    
+                    SubsectionView(title: "Player Roll Types") {
+                        BulletPointView(items: [
+                            "Attack Roll: d20 + modifiers",
+                            "Damage Roll: e.g., 2d6 + 4",
+                            "Healing Roll: HP recovery",
+                            "Ability Check: Skill-based (e.g., Stealth)",
+                            "Saving Throw: Resist effects",
+                            "Initiative: Turn order"
+                        ])
+                    }
+                    
+                    SubsectionView(title: "Advanced Player Features") {
+                        BulletPointView(items: [
+                            "Per-die min/max",
+                            "Custom drop/keep per roll",
+                            "Custom reroll logic (e.g., reroll 1s)",
+                            "Quick Rolls for common abilities (e.g., Sneak Attack)"
+                        ])
+                    }
+                    
+                    SubsectionView(title: "Hero Visual Display") {
+                        CodeBlockView(code: """
+🌟 [Roll Name]: [Result]
+- Rolls: [5, 6, 3]  (dropped: 1)
+- Rerolls: 1 → 4
+- Modifier: +2
+""")
+                    }
+                }
+                
+                // Fate Rolls
+                SectionView(title: "🔮 Fate Rolls: Dungeon Master Mode") {
+                    SubsectionView(title: "Overview") {
+                        Text("The DM's secret weapon for managing chaos and storytelling with flair.")
+                            .font(.body)
+                    }
+                    
+                    SubsectionView(title: "Fate Interface") {
+                        BulletPointView(items: [
+                            "Purple Theme with mystical effects",
+                            "25 custom Fate Rolls",
+                            "Sound: dice_shaking_waiting_Screen"
+                        ])
+                    }
+                    
+                    SubsectionView(title: "DM Roll Types") {
+                        BulletPointView(items: [
+                            "NPC Attack: Batch d20s",
+                            "Saving Throws: Environmental or mass saves",
+                            "Ability Checks: Group Stealth, etc.",
+                            "Initiative: For groups",
+                            "Special Rolls: Wild Magic, Treasure, Divine Intervention"
+                        ])
+                    }
+                    
+                    SubsectionView(title: "Narrative Tools") {
+                        BulletPointView(items: [
+                            "Random Encounter (d20/d100)",
+                            "NPC Reaction (2d6 + CHA)",
+                            "Weather Generator (d20)",
+                            "Morale Checks (d20)",
+                            "Hazard Activation (d6)"
+                        ])
+                    }
+                    
+                    SubsectionView(title: "Advanced DM Features") {
+                        BulletPointView(items: [
+                            "Bulk advantage/disadvantage",
+                            "Conditional mechanics (e.g., advantage if prone)",
+                            "Drop highest/lowest per group",
+                            "Reroll types: Legendary Resist, Lucky NPCs",
+                            "Degrees of Success",
+                            "Narrative Dice Pools (e.g., 1d6 danger escalation)"
+                        ])
+                    }
+                    
+                    SubsectionView(title: "Fate Display Format") {
+                        CodeBlockView(code: """
+🔮 [Fate Roll Name]: [Final Result]
+- Dice: [15, 8, 12, 3, 19]
+- Dropped: (3, 8)
+- Modifier: +3
+- Conditions: e.g., "Darkness: disadvantage"
+""")
+                    }
+                }
+                
+                // Quick Rolls
+                SectionView(title: "🔢 Quick Rolls (Both Modes)") {
+                    SubsectionView(title: "Combat") {
+                        BulletPointView(items: [
+                            "Mob Attack: 5d20 for minions",
+                            "AoE Save: 6d20",
+                            "Sneak Attack: 3d6+4"
+                        ])
+                    }
+                    
+                    SubsectionView(title: "Exploration") {
+                        BulletPointView(items: [
+                            "Group Stealth",
+                            "Trap Check",
+                            "Weather Check"
+                        ])
+                    }
+                    
+                    SubsectionView(title: "Social") {
+                        BulletPointView(items: [
+                            "Insight vs Deception",
+                            "Persuasion DC"
+                        ])
+                    }
+                }
+                
+                // Visual & Audio
+                SectionView(title: "🎭 Visual & Audio Experience") {
+                    BulletPointView(items: [
+                        "Animated dice physics",
+                        "Distinct sound effects per mode",
+                        "Thematic UI (Red for Hero, Purple for Fate)",
+                        "Smooth roll reveal with flair"
+                    ])
+                }
+                
+                // Best Practices
+                SectionView(title: "✨ Best Practices") {
+                    SubsectionView(title: "Heroes") {
+                        BulletPointView(items: [
+                            "Name and organize rolls",
+                            "Use quick rolls for combat speed",
+                            "Update modifiers on level up"
+                        ])
+                    }
+                    
+                    SubsectionView(title: "Dungeon Masters") {
+                        BulletPointView(items: [
+                            "Preload encounter and NPC rolls",
+                            "Roll in view for tension",
+                            "Let dice inspire story twists"
+                        ])
+                    }
+                }
+                
+                // Sample Rolls
+                SectionView(title: "🌟 Sample Rolls") {
+                    SubsectionView(title: "Player: Greatsword Attack") {
+                        BulletPointView(items: [
+                            "Dice: 2d6",
+                            "Reroll 1s/2s",
+                            "Modifier: +5",
+                            "Final: [5, 4] + 5 = 14"
+                        ])
+                    }
+                    
+                    SubsectionView(title: "DM: Goblin Ambush") {
+                        BulletPointView(items: [
+                            "Dice: 6d20",
+                            "Modifier: +4",
+                            "Drop Lowest: 1",
+                            "Final: Compare 5 rolls to AC"
+                        ])
+                    }
+                }
+                
+                // Conclusion
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("⚖️ Conclusion")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                    
+                    Text("Dice of Middle-Earth bridges the cinematic energy of player rolls with the hidden complexity of Dungeon Master planning. One engine. Two experiences. Unlimited adventure.")
+                        .font(.body)
+                    
+                    Text("Wield the dice. Shape your story. 🌟")
+                        .font(.headline)
+                        .padding(.top)
+                }
+                .padding(.top)
+            }
+            .padding()
+        }
+        .navigationTitle("Technical Specification")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+// Helper Views for InfoView
+struct SectionView<Content: View>: View {
+    let title: String
+    let content: Content
+    
+    init(title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.title2)
+                .fontWeight(.bold)
+                .padding(.top)
+            
+            content
+        }
+    }
+}
+
+struct SubsectionView<Content: View>: View {
+    let title: String
+    let content: Content
+    
+    init(title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.headline)
+                .foregroundColor(.primary)
+            
+            content
+        }
+        .padding(.leading)
+    }
+}
+
+struct BulletPointView: View {
+    let items: [String]
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ForEach(items, id: \.self) { item in
+                HStack(alignment: .top, spacing: 8) {
+                    Text("•")
+                        .foregroundColor(.secondary)
+                    Text(item)
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+    }
+}
+
+struct CodeBlockView: View {
+    let code: String
+    
+    var body: some View {
+        Text(code)
+            .font(.system(.body, design: .monospaced))
+            .padding()
+            .background(Color.gray.opacity(0.1))
+            .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+            )
     }
 }
 

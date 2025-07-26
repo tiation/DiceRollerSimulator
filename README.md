@@ -535,7 +535,7 @@ This app has been tested with:
 
 ### 🏠 Main Interface - Choose Your Path
 <div align="center">
-  <img src="screenshots/home_screen.png" alt="Player and Dungeon Master Selection" width="400">
+  <img src="screenshots/choose_adventure_view.png" alt="Player and Dungeon Master Selection" width="400">
   <p><em>Choose between Player (Hero) and Dungeon Master (Weaver of Fates) roles</em></p>
 </div>
 
@@ -571,7 +571,7 @@ This app has been tested with:
 
 ### 📜 Roll Chronicle
 <div align="center">
-  <img src="screenshots/roll_chronicle.png" alt="Roll Chronicle" width="400">
+  <img src="screenshots/roll-chronicle.png" alt="Roll Chronicle" width="400">
   <p><em>Detailed history of all dice rolls with new styling and filtering capabilities</em></p>
 </div>
 

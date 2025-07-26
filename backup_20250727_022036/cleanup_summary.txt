@@ -1,0 +1,19 @@
+Repository Cleanup Summary
+========================
+Date: Sun 27 Jul 2025 02:20:36 AWST
+Backup Directory: backup_20250727_022036
+
+Files and directories moved to backup:
+- Backend directory (Node.js server)
+- Web deployment files (_config.yml, CNAME, etc.)
+- Redundant ContentView variants
+- Unused feature files (Analytics, API, Payments, etc.)
+- Deployment scripts
+- Documentation files (moved to docs/archive)
+- Duplicate files
+
+To restore any file:
+  mv backup_20250727_022036/[filename] .
+
+To remove backup permanently:
+  rm -rf backup_20250727_022036
