@@ -196,6 +196,206 @@ The latest IPA build of Dice Of Middle-Earth is available through two installati
 
 ---
 
+## 🌿 Dice of Middle-Earth: Unified Technical Specification
+
+### ⚔️ Hero Rolls & 🔮 Fate Rolls
+
+A comprehensive system for epic dice rolling adventures. Whether you're a bold hero facing dragons or a shadowy Dungeon Master weaving the world's fate, this guide is your complete reference.
+
+---
+
+### 🔢 Core Dice Engine
+
+#### Standard Dice Types
+
+* `d4`: Minor effects, light damage
+* `d6`: Common damage, checks
+* `d8`: Moderate damage, specific rolls
+* `d10`: High damage, percentile rolls
+* `d12`: Heavy damage, rare actions
+* `d20`: Core resolution die
+* `d100`: Random tables, loot
+
+#### Dice Mechanics
+
+```plaintext
+Final Result = (Dice Results) + Modifier + Special Mechanics
+```
+
+* **Modifiers**: -10 to +10
+* **Custom Names**: Unlimited
+* **Max Dice Per Roll**: 99
+
+#### Shared Features
+
+* Drop/Keep highest or lowest
+* Advantage/Disadvantage
+* Reroll mechanics (lowest, threshold)
+* Quick Rolls
+* Roll history: up to 100
+
+---
+
+### ⚔️ Hero Rolls: Player Mode
+
+#### Overview
+
+Player-focused mechanics for attacks, abilities, healing, and heroic flair.
+
+#### Hero Interface
+
+* **Red Theme**
+* Personalized roll slots (up to 25)
+* Sound: "RPG_Dice_Rolling"
+
+#### Player Roll Types
+
+* **Attack Roll**: d20 + modifiers
+* **Damage Roll**: e.g., 2d6 + 4
+* **Healing Roll**: HP recovery
+* **Ability Check**: Skill-based (e.g., Stealth)
+* **Saving Throw**: Resist effects
+* **Initiative**: Turn order
+
+#### Advanced Player Features
+
+* Per-die min/max
+* Custom drop/keep per roll
+* Custom reroll logic (e.g., reroll 1s)
+* Quick Rolls for common abilities (e.g., "Sneak Attack")
+
+#### Hero Visual Display
+
+```plaintext
+🌟 [Roll Name]: [Result]
+- Rolls: [5, 6, 3]  (dropped: 1)
+- Rerolls: 1 → 4
+- Modifier: +2
+```
+
+---
+
+### 🔮 Fate Rolls: Dungeon Master Mode
+
+#### Overview
+
+The DM's secret weapon for managing chaos and storytelling with flair.
+
+#### Fate Interface
+
+* **Purple Theme** with mystical effects
+* 25 custom Fate Rolls
+* Sound: "dice_shaking_waiting_Screen"
+
+#### DM Roll Types
+
+* **NPC Attack**: Batch d20s
+* **Saving Throws**: Environmental or mass saves
+* **Ability Checks**: Group Stealth, etc.
+* **Initiative**: For groups
+* **Special Rolls**: Wild Magic, Treasure, Divine Intervention
+
+#### Narrative Tools
+
+* **Random Encounter** (d20/d100)
+* **NPC Reaction** (2d6 + CHA)
+* **Weather Generator** (d20)
+* **Morale Checks** (d20)
+* **Hazard Activation** (d6)
+
+#### Advanced DM Features
+
+* Bulk advantage/disadvantage
+* Conditional mechanics (e.g., "advantage if prone")
+* Drop highest/lowest per group
+* Reroll types: Legendary Resist, Lucky NPCs
+* Degrees of Success
+* Narrative Dice Pools (e.g., 1d6 danger escalation)
+
+#### Fate Display Format
+
+```plaintext
+🔮 [Fate Roll Name]: [Final Result]
+- Dice: [15, 8, 12, 3, 19]
+- Dropped: (3, 8)
+- Modifier: +3
+- Conditions: e.g., "Darkness: disadvantage"
+```
+
+---
+
+### 🔢 Quick Rolls (Both Modes)
+
+#### Combat
+
+* "Mob Attack": 5d20 for minions
+* "AoE Save": 6d20
+* "Sneak Attack": 3d6+4
+
+#### Exploration
+
+* Group Stealth
+* Trap Check
+* Weather Check
+
+#### Social
+
+* Insight vs Deception
+* Persuasion DC
+
+---
+
+### 🎭 Visual & Audio Experience
+
+* Animated dice physics
+* Distinct sound effects per mode
+* Thematic UI (Red for Hero, Purple for Fate)
+* Smooth roll reveal with flair
+
+---
+
+### ✨ Best Practices
+
+#### Heroes
+
+* Name and organize rolls
+* Use quick rolls for combat speed
+* Update modifiers on level up
+
+#### Dungeon Masters
+
+* Preload encounter and NPC rolls
+* Roll in view for tension
+* Let dice inspire story twists
+
+---
+
+### 🌟 Sample Rolls
+
+#### Player: Greatsword Attack
+
+* Dice: 2d6
+* Reroll 1s/2s
+* Modifier: +5
+* Final: [5, 4] + 5 = 14
+
+#### DM: Goblin Ambush
+
+* Dice: 6d20
+* Modifier: +4
+* Drop Lowest: 1
+* Final: Compare 5 rolls to AC
+
+---
+
+### ⚖️ Conclusion
+
+**Dice of Middle-Earth** bridges the cinematic energy of player rolls with the hidden complexity of Dungeon Master planning. One engine. Two experiences. Unlimited adventure.
+
+Wield the dice. Shape your story. 🌟
+
+---
+
 ## 📦 Installation
 
 ### Prerequisites
