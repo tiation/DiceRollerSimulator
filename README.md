@@ -55,6 +55,9 @@ After auditing the project structure, **DiceRollerSimulator** has been selected 
 
 ### 🛠️ Recent Changes
 
+- **Swipe Navigation**: Added intuitive swipe gesture navigation between all three tabs (Player/DM, Chronicle, and General Dice)
+- **Enhanced UI**: Updated screenshots showing the latest interface improvements
+- **Reorderable Rolls**: Both Hero Rolls and Fate Rolls now support drag-to-reorder functionality
 - **Icon Fixes**: Updated icon configuration and added missing sizes for iPad. Confirmed icons display correctly across all devices.
 
 ---
@@ -358,6 +361,18 @@ This app has been tested with:
 <div align="center">
   <img src="screenshots/fate_rolls_expanded.png" alt="Fate Rolls Expanded" width="400">
   <p><em>Enhanced Fate Roll configuration with improved text visibility and dark color scheme</em></p>
+</div>
+
+### 💫 Dice Roll Result
+<div align="center">
+  <img src="screenshots/dice_roll_result.png" alt="Dice Roll Result" width="400">
+  <p><em>The Dice Have Spoken - Roll results are now more informative and visually clear</em></p>
+</div>
+
+### 📜 Roll Chronicle
+<div align="center">
+  <img src="screenshots/roll_chronicle.png" alt="Roll Chronicle" width="400">
+  <p><em>Detailed history of all dice rolls with new styling and filtering capabilities</em></p>
 </div>
 
 ### 🎯 General Dice Roller
