@@ -1364,7 +1364,7 @@ struct PlayerView: View {
                                 }
                             }
                         }
-                    ) { baseRoll, finalResult in
+                    ) { rollResults in
                         // Set row selection immediately
                         selectedRowId = config.id
                         
@@ -1377,11 +1377,11 @@ struct PlayerView: View {
                         // Add to rollLogger using global roll type
                         let diceRoll = DiceRoll(
                             diceType: config.diceType.sides,
-                            numberOfDice: 1,
-                            results: [baseRoll],
-                            total: baseRoll,
+                            numberOfDice: config.numberOfDice,
+                            results: rollResults.allRolls,
+                            total: rollResults.baseTotal,
                             modifier: config.modifier,
-                            finalTotal: finalResult,
+                            finalTotal: rollResults.finalResult,
                             rollType: selectedGlobalRollType,
                             description: config.name,
                             timestamp: Date()
@@ -1391,7 +1391,21 @@ struct PlayerView: View {
                         // After animation, show result (faster)
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                             showingRollAnimation = false
-                            lastRollResult = "⚔️ \(config.name): \(finalResult) (\(config.diceType.rawValue)\(config.modifier >= 0 ? "+" : "")\(config.modifier))"
+                            
+                            var resultMessage = "⚔️ \(config.name): \(rollResults.finalResult)"
+                            if config.numberOfDice > 1 {
+                                resultMessage += " [\(rollResults.usedRolls.map(String.init).joined(separator: ", "))]"
+                                if !rollResults.droppedRolls.isEmpty {
+                                    resultMessage += " (dropped: \(rollResults.droppedRolls.map(String.init).joined(separator: ", ")))"
+                                }
+                                if !rollResults.rerolledRolls.isEmpty {
+                                    resultMessage += " (rerolled: \(rollResults.rerolledRolls.map(String.init).joined(separator: ", ")))"
+                                }
+                            } else {
+                                resultMessage += " (\(config.diceType.rawValue)\(config.modifier >= 0 ? "+" : "")\(config.modifier))"
+                            }
+                            
+                            lastRollResult = resultMessage
                             showingRollResult = true
                             
                             // Clear selection after result appears
@@ -1690,8 +1704,8 @@ struct DungeonMasterView: View {
             // Dice List
             List {
                 ForEach($customDiceConfigs) { $config in
-                    DungeonMasterDiceRowView(config: $config) { result in
-                        performRoll(for: config, result: result)
+                    DungeonMasterDiceRowView(config: $config) {
+                        performRoll(for: config)
                     }
                     .listRowBackground(Color.purple.opacity(0.2))
                     .listRowSeparator(.hidden)
@@ -1766,21 +1780,22 @@ struct DungeonMasterView: View {
         )
     }
     
-    private func performRoll(for config: CustomDiceConfig, result: Int) {
+    private func performRoll(for config: CustomDiceConfig) {
         // Play custom dice roll sound
         soundManager.playDiceRollSound()
         showingRollAnimation = true
         
+        // Use the same roll logic as PlayerDiceRowView
+        let rollResults = performDMRoll(for: config)
+        
         // Add to rollLogger
-        let results = (0..<config.numberOfDice).map { _ in Int.random(in: 1...config.diceType.sides) }
-        let total = results.reduce(0, +)
         let diceRoll = DiceRoll(
             diceType: config.diceType.sides,
             numberOfDice: config.numberOfDice,
-            results: results,
-            total: total,
+            results: rollResults.allRolls,
+            total: rollResults.baseTotal,
             modifier: config.modifier,
-            finalTotal: total + config.modifier,
+            finalTotal: rollResults.finalResult,
             rollType: .normal,
             description: config.name,
             timestamp: Date()
@@ -1788,7 +1803,19 @@ struct DungeonMasterView: View {
         rollLogger.addRoll(diceRoll)
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-            let rollDescription = "⚔️ \(config.name): \(result) (\(config.numberOfDice)\(config.diceType.rawValue)\(config.modifier >= 0 ? "+" : "")\(config.modifier))"
+            var rollDescription = "🔮 \(config.name): \(rollResults.finalResult)"
+            if config.numberOfDice > 1 {
+                rollDescription += " [\(rollResults.usedRolls.map(String.init).joined(separator: ", "))]"
+                if !rollResults.droppedRolls.isEmpty {
+                    rollDescription += " (dropped: \(rollResults.droppedRolls.map(String.init).joined(separator: ", ")))"
+                }
+                if !rollResults.rerolledRolls.isEmpty {
+                    rollDescription += " (rerolled: \(rollResults.rerolledRolls.map(String.init).joined(separator: ", ")))"
+                }
+            } else {
+                rollDescription += " (\(config.diceType.rawValue)\(config.modifier >= 0 ? "+" : "")\(config.modifier))"
+            }
+            
             lastRollResult = rollDescription
             showingRollAnimation = false
             showingRollResult = true
@@ -1799,6 +1826,120 @@ struct DungeonMasterView: View {
                 rollHistory = Array(rollHistory.prefix(50))
             }
         }
+    }
+    
+    private func performDMRoll(for config: CustomDiceConfig) -> RollResults {
+        var allRolls: [Int] = []
+        var rerolledRolls: [Int] = []
+        var droppedRolls: [Int] = []
+        
+        // Initial rolls
+        var currentRolls = (0..<config.numberOfDice).map { _ in Int.random(in: 1...config.diceType.sides) }
+        allRolls.append(contentsOf: currentRolls)
+        
+        // Apply min/max modifiers per die first
+        if config.minMaxModifier != 0 {
+            for i in 0..<currentRolls.count {
+                if config.useMinimum {
+                    let minValue = 1 + config.minMaxModifier
+                    currentRolls[i] = max(currentRolls[i], minValue)
+                } else {
+                    let maxValue = config.diceType.sides + config.minMaxModifier
+                    currentRolls[i] = min(currentRolls[i], maxValue)
+                }
+            }
+        }
+        
+        // Apply drop/reroll logic if enabled and we have more than 1 die
+        var usedRolls = currentRolls
+        
+        if config.dropLowest > 0 && currentRolls.count > 1 {
+            let dropCount = min(config.dropLowest, currentRolls.count - 1)
+            
+            if config.useRerollInsteadOfDrop {
+                // Reroll logic
+                let sortedRolls = currentRolls.sorted()
+                let rollsToReroll: [Int]
+                
+                if config.dropHighestInsteadOfLowest {
+                    // Reroll highest dice
+                    rollsToReroll = Array(sortedRolls.suffix(dropCount))
+                } else {
+                    // Reroll lowest dice
+                    rollsToReroll = Array(sortedRolls.prefix(dropCount))
+                }
+                
+                rerolledRolls.append(contentsOf: rollsToReroll)
+                
+                // Remove rerolled dice from current rolls
+                var rollsToRemove = rollsToReroll
+                for value in rollsToReroll {
+                    if let index = usedRolls.firstIndex(of: value) {
+                        usedRolls.remove(at: index)
+                        if let removeIndex = rollsToRemove.firstIndex(of: value) {
+                            rollsToRemove.remove(at: removeIndex)
+                        }
+                    }
+                }
+                
+                // Roll new dice
+                let newRolls = (0..<dropCount).map { _ in 
+                    var roll: Int
+                    repeat {
+                        roll = Int.random(in: 1...config.diceType.sides)
+                        // Apply min/max modifiers to rerolled dice too
+                        if config.minMaxModifier != 0 {
+                            if config.useMinimum {
+                                let minValue = 1 + config.minMaxModifier
+                                roll = max(roll, minValue)
+                            } else {
+                                let maxValue = config.diceType.sides + config.minMaxModifier
+                                roll = min(roll, maxValue)
+                            }
+                        }
+                    } while config.rerollOnce == false && roll <= config.rerollTarget
+                    return roll
+                }
+                
+                usedRolls.append(contentsOf: newRolls)
+                allRolls.append(contentsOf: newRolls)
+                
+            } else {
+                // Drop logic
+                let sortedRolls = currentRolls.sorted()
+                
+                if config.dropHighestInsteadOfLowest {
+                    // Drop highest dice
+                    droppedRolls = Array(sortedRolls.suffix(dropCount))
+                } else {
+                    // Drop lowest dice
+                    droppedRolls = Array(sortedRolls.prefix(dropCount))
+                }
+                
+                // Remove dropped dice from used rolls
+                var rollsToRemove = droppedRolls
+                for value in droppedRolls {
+                    if let index = usedRolls.firstIndex(of: value) {
+                        usedRolls.remove(at: index)
+                        if let removeIndex = rollsToRemove.firstIndex(of: value) {
+                            rollsToRemove.remove(at: removeIndex)
+                        }
+                    }
+                }
+            }
+        }
+        
+        let baseTotal = usedRolls.reduce(0, +)
+        let finalResult = baseTotal + config.modifier
+        
+        return RollResults(
+            allRolls: allRolls,
+            usedRolls: usedRolls,
+            droppedRolls: droppedRolls,
+            rerolledRolls: rerolledRolls,
+            baseTotal: baseTotal,
+            finalResult: finalResult
+        )
     }
     
     // Quick Roll function for DM
@@ -1877,6 +2018,15 @@ struct DungeonMasterView: View {
     }
 }
 
+struct RollResults {
+    let allRolls: [Int] // All dice rolled (including rerolls)
+    let usedRolls: [Int] // Final dice used in calculation (after drops/rerolls)
+    let droppedRolls: [Int] // Dice that were dropped
+    let rerolledRolls: [Int] // Dice that were rerolled
+    let baseTotal: Int // Sum of used rolls
+    let finalResult: Int // Base total + modifier
+}
+
 struct RollResultDetails {
     let rollName: String
     let diceType: DiceType
@@ -1898,13 +2048,20 @@ struct CustomDiceConfig: Identifiable {
     var numberOfDice: Int
     var modifier: Int
     var dropLowest: Int = 0
+    var rerollLowest: Int = 0
     var minMaxModifier: Int = 0 // Range -6 to +6 per dice
     var useMinimum: Bool = false // true = minimum, false = maximum
+    var useRerollInsteadOfDrop: Bool = false // false = drop, true = reroll
+    var dropHighestInsteadOfLowest: Bool = false // false = lowest, true = highest
+    var rerollTarget: Int = 1 // reroll dice that are <= this value
+    var rerollOnce: Bool = true // true = reroll once, false = reroll until above target
+    var advantageMode: Bool = false // true = advantage/disadvantage mode (2d20, keep highest/lowest)
+    var useAdvantage: Bool = true // true = advantage (keep highest), false = disadvantage (keep lowest)
 }
 
 struct DungeonMasterDiceRowView: View {
     @Binding var config: CustomDiceConfig
-    let onRoll: (Int) -> Void
+    let onRoll: () -> Void
     
     @State private var isExpanded = false
     @State private var isSelected = false
@@ -3717,19 +3874,143 @@ struct ExpandedOptionsView: View {
                 }
             }
 
-            // Drop Lowest (only show if numberOfDice > 1)
+            // Drop vs Reroll (only show if numberOfDice > 1)
             if config.numberOfDice > 1 {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 8) {
+                    // Drop vs Reroll Toggle
                     HStack {
-                        Image(systemName: "arrow.down.circle")
+                        Image(systemName: config.useRerollInsteadOfDrop ? "arrow.clockwise.circle" : "arrow.down.circle")
                             .foregroundColor(.orange)
                             .font(.system(size: 14))
-                        Text("Drop Lowest")
+                        Text("Dice Management")
                             .font(.caption)
                             .fontWeight(.semibold)
                             .foregroundColor(.orange)
                     }
+                    
+                    // Action type toggle
+                    HStack(spacing: 16) {
+                        Text("Action:")
+                            .font(.caption2)
+                            .foregroundColor(.gray)
+                        
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                config.useRerollInsteadOfDrop = false
+                            }
+                        }) {
+                            Text("Drop")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundColor(!config.useRerollInsteadOfDrop ? .black : .white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(
+                                            !config.useRerollInsteadOfDrop ?
+                                            LinearGradient(colors: [.red, .orange], startPoint: .topLeading, endPoint: .bottomTrailing) :
+                                            LinearGradient(colors: [.clear, .clear], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .stroke(Color.red.opacity(0.4), lineWidth: 1)
+                                        )
+                                )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                config.useRerollInsteadOfDrop = true
+                            }
+                        }) {
+                            Text("Reroll")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundColor(config.useRerollInsteadOfDrop ? .black : .white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(
+                                            config.useRerollInsteadOfDrop ?
+                                            LinearGradient(colors: [.blue, .cyan], startPoint: .topLeading, endPoint: .bottomTrailing) :
+                                            LinearGradient(colors: [.clear, .clear], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .stroke(Color.blue.opacity(0.4), lineWidth: 1)
+                                        )
+                                )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        
+                        Spacer()
+                    }
+                    
+                    // High vs Low toggle
+                    HStack(spacing: 16) {
+                        Text("Target:")
+                            .font(.caption2)
+                            .foregroundColor(.gray)
+                        
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                config.dropHighestInsteadOfLowest = false
+                            }
+                        }) {
+                            Text("Lowest")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundColor(!config.dropHighestInsteadOfLowest ? .black : .white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(
+                                            !config.dropHighestInsteadOfLowest ?
+                                            LinearGradient(colors: [.green, .teal], startPoint: .topLeading, endPoint: .bottomTrailing) :
+                                            LinearGradient(colors: [.clear, .clear], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .stroke(Color.green.opacity(0.4), lineWidth: 1)
+                                        )
+                                )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                config.dropHighestInsteadOfLowest = true
+                            }
+                        }) {
+                            Text("Highest")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundColor(config.dropHighestInsteadOfLowest ? .black : .white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(
+                                            config.dropHighestInsteadOfLowest ?
+                                            LinearGradient(colors: [.purple, .pink], startPoint: .topLeading, endPoint: .bottomTrailing) :
+                                            LinearGradient(colors: [.clear, .clear], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .stroke(Color.purple.opacity(0.4), lineWidth: 1)
+                                        )
+                                )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        
+                        Spacer()
+                    }
 
+                    // Number selector
                     HStack {
                         Button(action: {
                             if config.dropLowest > 0 {
@@ -3773,6 +4054,60 @@ struct ExpandedOptionsView: View {
                         .buttonStyle(PlainButtonStyle())
 
                         Spacer()
+                    }
+                    
+                    // Help text
+                    Group {
+                        if config.useRerollInsteadOfDrop {
+                            Text("Reroll the \(config.dropLowest) \(config.dropHighestInsteadOfLowest ? "highest" : "lowest") dice")
+                        } else {
+                            Text("Drop the \(config.dropLowest) \(config.dropHighestInsteadOfLowest ? "highest" : "lowest") dice")
+                        }
+                    }
+                    .font(.caption2)
+                    .foregroundColor(.gray.opacity(0.8))
+                    .italic()
+                    
+                    // Advantage/Disadvantage shortcut for d20
+                    if config.diceType == .d20 && config.numberOfDice == 2 {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("D&D 5e Shortcuts:")
+                                .font(.caption2)
+                                .foregroundColor(.yellow)
+                                .fontWeight(.semibold)
+                            
+                            HStack(spacing: 8) {
+                                Button("Advantage") {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        config.useRerollInsteadOfDrop = false
+                                        config.dropHighestInsteadOfLowest = false
+                                        config.dropLowest = 1
+                                    }
+                                }
+                                .font(.caption2)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.green.opacity(0.3))
+                                .foregroundColor(.white)
+                                .cornerRadius(6)
+                                
+                                Button("Disadvantage") {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        config.useRerollInsteadOfDrop = false
+                                        config.dropHighestInsteadOfLowest = true
+                                        config.dropLowest = 1
+                                    }
+                                }
+                                .font(.caption2)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.red.opacity(0.3))
+                                .foregroundColor(.white)
+                                .cornerRadius(6)
+                                
+                                Spacer()
+                            }
+                        }
                     }
                 }
             }
@@ -4098,16 +4433,213 @@ struct PlayerDiceRowView: View {
     @Binding var config: CustomDiceConfig
     let isSelected: Bool
     let onTap: () -> Void
-    let onRoll: (Int, Int) -> Void // baseRoll, finalResult
+    let onRoll: (RollResults) -> Void
     
     @State private var isExpanded = false
     
     var body: some View {
-        EnhancedCustomDiceRowView(
-            config: $config,
-            isSelected: isSelected,
-            onTap: onTap,
-            onRoll: onRoll
+        VStack(alignment: .leading, spacing: 8) {
+            // Row Header with Name and Roll Button
+            HStack {
+                // Configuration expand button
+                Button(action: {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        isExpanded.toggle()
+                    }
+                }) {
+                    Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                        .foregroundColor(.white)
+                        .font(.system(size: 12))
+                        .shadow(color: isSelected ? .red.opacity(0.5) : .clear, radius: 2)
+                }
+                .buttonStyle(PlainButtonStyle())
+                
+                // Roll name
+                TextField("Roll Name", text: $config.name)
+                    .textFieldStyle(PlainTextFieldStyle())
+                    .foregroundColor(.white)
+                    .font(.system(size: 16, weight: .medium))
+                    .shadow(color: isSelected ? .red.opacity(0.3) : .clear, radius: 1)
+                
+                Spacer()
+                
+                // Dice info display
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("\(config.numberOfDice)\(config.diceType.rawValue)")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                    Text("\(config.modifier >= 0 ? "+" : "")\(config.modifier)")
+                        .font(.caption2)
+                        .foregroundColor(.white.opacity(0.9))
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.black.opacity(0.7))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(isSelected ? Color.red.opacity(0.8) : Color.red.opacity(0.4), lineWidth: 1)
+                        )
+                )
+                
+                // Roll button
+                Button(action: {
+                    if !isExpanded {
+                        onTap()
+                        let rollResults = performRoll(for: config)
+                        onRoll(rollResults)
+                    }
+                }) {
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: isExpanded ? 
+                                        [Color.gray.opacity(0.5), Color.gray.opacity(0.3)] :
+                                        isSelected ? 
+                                            [Color.red.opacity(0.9), Color.orange.opacity(0.8)] :
+                                            [Color.red.opacity(0.7), Color.red.opacity(0.5)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: isSelected ? 44 : 40, height: isSelected ? 44 : 40)
+                            .shadow(color: isExpanded ? .clear : isSelected ? .red.opacity(0.6) : .red.opacity(0.3), radius: isSelected ? 6 : 4)
+
+                        Image(systemName: isExpanded ? "gearshape.fill" : "dice.fill")
+                            .foregroundColor(isExpanded ? .gray : .white)
+                            .font(.system(size: isSelected ? 20 : 18, weight: .bold))
+                            .shadow(color: isExpanded ? .clear : .black.opacity(0.3), radius: 1)
+                    }
+                }
+                .disabled(isExpanded)
+                .scaleEffect(isSelected ? 1.1 : (isExpanded ? 1.05 : 1.0))
+                .animation(.easeInOut(duration: 0.2), value: isSelected)
+                .animation(.easeInOut(duration: 0.2), value: isExpanded)
+            }
+            
+            // Expanded Configuration Options
+            if isExpanded {
+                ExpandedOptionsView(config: $config)
+            }
+        }
+        .padding(.vertical, 8)
+        .animation(.easeInOut(duration: 0.2), value: isSelected)
+    }
+    
+    private func performRoll(for config: CustomDiceConfig) -> RollResults {
+        var allRolls: [Int] = []
+        var rerolledRolls: [Int] = []
+        var droppedRolls: [Int] = []
+        
+        // Initial rolls
+        var currentRolls = (0..<config.numberOfDice).map { _ in Int.random(in: 1...config.diceType.sides) }
+        allRolls.append(contentsOf: currentRolls)
+        
+        // Apply min/max modifiers per die first
+        if config.minMaxModifier != 0 {
+            for i in 0..<currentRolls.count {
+                if config.useMinimum {
+                    let minValue = 1 + config.minMaxModifier
+                    currentRolls[i] = max(currentRolls[i], minValue)
+                } else {
+                    let maxValue = config.diceType.sides + config.minMaxModifier
+                    currentRolls[i] = min(currentRolls[i], maxValue)
+                }
+            }
+        }
+        
+        // Apply drop/reroll logic if enabled and we have more than 1 die
+        var usedRolls = currentRolls
+        
+        if config.dropLowest > 0 && currentRolls.count > 1 {
+            let dropCount = min(config.dropLowest, currentRolls.count - 1)
+            
+            if config.useRerollInsteadOfDrop {
+                // Reroll logic
+                let sortedRolls = currentRolls.sorted()
+                let rollsToReroll: [Int]
+                
+                if config.dropHighestInsteadOfLowest {
+                    // Reroll highest dice
+                    rollsToReroll = Array(sortedRolls.suffix(dropCount))
+                } else {
+                    // Reroll lowest dice
+                    rollsToReroll = Array(sortedRolls.prefix(dropCount))
+                }
+                
+                rerolledRolls.append(contentsOf: rollsToReroll)
+                
+                // Remove rerolled dice from current rolls
+                var rollsToRemove = rollsToReroll
+                for value in rollsToReroll {
+                    if let index = usedRolls.firstIndex(of: value) {
+                        usedRolls.remove(at: index)
+                        if let removeIndex = rollsToRemove.firstIndex(of: value) {
+                            rollsToRemove.remove(at: removeIndex)
+                        }
+                    }
+                }
+                
+                // Roll new dice
+                let newRolls = (0..<dropCount).map { _ in 
+                    var roll: Int
+                    repeat {
+                        roll = Int.random(in: 1...config.diceType.sides)
+                        // Apply min/max modifiers to rerolled dice too
+                        if config.minMaxModifier != 0 {
+                            if config.useMinimum {
+                                let minValue = 1 + config.minMaxModifier
+                                roll = max(roll, minValue)
+                            } else {
+                                let maxValue = config.diceType.sides + config.minMaxModifier
+                                roll = min(roll, maxValue)
+                            }
+                        }
+                    } while config.rerollOnce == false && roll <= config.rerollTarget
+                    return roll
+                }
+                
+                usedRolls.append(contentsOf: newRolls)
+                allRolls.append(contentsOf: newRolls)
+                
+            } else {
+                // Drop logic
+                let sortedRolls = currentRolls.sorted()
+                
+                if config.dropHighestInsteadOfLowest {
+                    // Drop highest dice
+                    droppedRolls = Array(sortedRolls.suffix(dropCount))
+                } else {
+                    // Drop lowest dice
+                    droppedRolls = Array(sortedRolls.prefix(dropCount))
+                }
+                
+                // Remove dropped dice from used rolls
+                var rollsToRemove = droppedRolls
+                for value in droppedRolls {
+                    if let index = usedRolls.firstIndex(of: value) {
+                        usedRolls.remove(at: index)
+                        if let removeIndex = rollsToRemove.firstIndex(of: value) {
+                            rollsToRemove.remove(at: removeIndex)
+                        }
+                    }
+                }
+            }
+        }
+        
+        let baseTotal = usedRolls.reduce(0, +)
+        let finalResult = baseTotal + config.modifier
+        
+        return RollResults(
+            allRolls: allRolls,
+            usedRolls: usedRolls,
+            droppedRolls: droppedRolls,
+            rerolledRolls: rerolledRolls,
+            baseTotal: baseTotal,
+            finalResult: finalResult
         )
     }
 }
