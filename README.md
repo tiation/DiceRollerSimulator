@@ -52,6 +52,11 @@ After auditing the project structure, **DiceRollerSimulator** has been selected 
 4. **📜 Roll Chronicle** - Complete history of all dice rolls with filtering
 5. **🎲 General Dice** - Quick access to standard D&D dice with roll history
 
+
+### 🛠️ Recent Changes
+
+- **Icon Fixes**: Updated icon configuration and added missing sizes for iPad. Confirmed icons display correctly across all devices.
+
 ---
 
 ## 🏗️ Architecture
