@@ -1,6 +1,7 @@
 import SwiftUI
 import Foundation
 import AudioToolbox
+import AVFoundation
 
 struct DiceRoll: Identifiable, Codable {
     let id = UUID()
@@ -56,7 +57,7 @@ enum DiceType: String, CaseIterable, Codable {
 }
 
 struct QuickRoll: Identifiable, Codable {
-    let id = UUID()
+    var id = UUID()
     let name: String
     let dice: Int
     let sides: Int
@@ -73,6 +74,38 @@ struct QuickRoll: Identifiable, Codable {
         self.rollType = rollType
         self.description = description
         self.isDefault = isDefault
+    }
+}
+
+class SoundManager: ObservableObject {
+    private var audioPlayer: AVAudioPlayer?
+    
+    func playWaitingScreenSound() {
+        // Play custom sound only, no fallback
+        playSound(named: "dice_shaking_waiting_Screen")
+    }
+    
+    func playDiceRollSound() {
+        // Play custom sound only, no fallback
+        playSound(named: "RPG_Dice_Rolling")
+    }
+    
+    @discardableResult
+    private func playSound(named soundName: String) -> Bool {
+        // Try to find the sound file in the main bundle
+        guard let url = Bundle.main.url(forResource: soundName, withExtension: "mp3") else {
+            print("Could not find sound file: \(soundName).mp3 in bundle")
+            return false
+        }
+        
+        do {
+            audioPlayer = try AVAudioPlayer(contentsOf: url)
+            audioPlayer?.play()
+            return true
+        } catch {
+            print("Error playing sound \(soundName): \(error.localizedDescription)")
+            return false
+        }
     }
 }
 
@@ -233,10 +266,11 @@ class QuickRollManager: ObservableObject {
 struct PlayerTabView: View {
     @ObservedObject var rollLogger: RollLogger
     @ObservedObject var quickRollManager: QuickRollManager
+    @ObservedObject var soundManager: SoundManager
 
     var body: some View {
         NavigationView {
-            PlayerView(rollLogger: rollLogger, quickRollManager: quickRollManager)
+            PlayerView(rollLogger: rollLogger, quickRollManager: quickRollManager, soundManager: soundManager)
                 .navigationTitle("Player")
                 .navigationBarTitleDisplayMode(.inline)
         }
@@ -246,10 +280,11 @@ struct PlayerTabView: View {
 struct DungeonMasterTabView: View {
     @ObservedObject var rollLogger: RollLogger
     @ObservedObject var quickRollManager: QuickRollManager
+    @ObservedObject var soundManager: SoundManager
 
     var body: some View {
         NavigationView {
-            DungeonMasterView(rollLogger: rollLogger, quickRollManager: quickRollManager)
+            DungeonMasterView(rollLogger: rollLogger, quickRollManager: quickRollManager, soundManager: soundManager)
                 .navigationTitle("Dungeon Master")
                 .navigationBarTitleDisplayMode(.inline)
         }
@@ -271,10 +306,11 @@ struct LogTabView: View {
 struct GeneralDiceTabView: View {
     @ObservedObject var rollLogger: RollLogger
     @ObservedObject var quickRollManager: QuickRollManager
+    @ObservedObject var soundManager: SoundManager
 
     var body: some View {
         NavigationView {
-            GeneralDiceView(rollLogger: rollLogger, quickRollManager: quickRollManager)
+            GeneralDiceView(rollLogger: rollLogger, quickRollManager: quickRollManager, soundManager: soundManager)
                 .navigationTitle("General Dice")
                 .navigationBarTitleDisplayMode(.inline)
         }
@@ -445,6 +481,7 @@ struct RollHistoryRowView: View {
 struct GeneralDiceView: View {
     @ObservedObject var rollLogger: RollLogger
     @ObservedObject var quickRollManager: QuickRollManager
+    @ObservedObject var soundManager: SoundManager
     
     @State private var selectedDice: DiceType = .d6
     @State private var numberOfDice: Int = 1
@@ -480,7 +517,7 @@ struct GeneralDiceView: View {
                         .foregroundColor(.primary)
                         .fontWeight(.medium)
                     Spacer()
-                    Stepper(value: $numberOfDice, in: 1...10) {
+                    Stepper(value: $numberOfDice, in: 1...99) {
                         Text("\(numberOfDice)")
                             .foregroundColor(.primary)
                             .fontWeight(.semibold)
@@ -595,6 +632,9 @@ struct GeneralDiceView: View {
     @State private var rollResultMessage: String = ""
     
     private func rollDice() {
+        // Play dice roll sound
+        soundManager.playDiceRollSound()
+        
         let results: [Int] = (0..<numberOfDice).map { _ in Int.random(in: 1...selectedDice.sides) }
         let total = results.reduce(0, +)
         let finalTotal = total + modifier
@@ -621,6 +661,7 @@ struct ContentView: View {
         case player, dungeonMaster
     }
     
+    @StateObject private var soundManager = SoundManager()
     @State private var selectedUserType: UserType? = nil
     @State private var navigateToUserDetails = false
     @State private var showingDiceAnimation = false
@@ -838,7 +879,14 @@ struct ContentView: View {
         
         // Start dice rolling animation
         showingDiceAnimation = true
-        playDiceRollSound()
+        
+        // Play waiting screen sound first
+        soundManager.playWaitingScreenSound()
+        
+        // Then play dice rolling sequence
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            playDiceRollSound()
+        }
         
         // Start continuous dice rotation animation
         withAnimation(.linear(duration: 2.0).repeatCount(3, autoreverses: false)) {
@@ -853,27 +901,8 @@ struct ContentView: View {
     }
     
     private func playDiceRollSound() {
-        // Play dice rolling sound sequence
-        let soundID: SystemSoundID = 1103 // Initial roll sound
-        AudioServicesPlaySystemSound(soundID)
-        
-        // Rolling sounds sequence
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            AudioServicesPlaySystemSound(1004) // Rolling sound 1
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            AudioServicesPlaySystemSound(1007) // Rolling sound 2
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            AudioServicesPlaySystemSound(1004) // Rolling sound 3
-        }
-        
-        // Final "success" sound when dice stop
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-            AudioServicesPlaySystemSound(1016) // Success/completion sound
-        }
+        // Use the SoundManager instead of system sounds
+        soundManager.playDiceRollSound()
     }
     
     private func setupAudioSession() {
@@ -1193,6 +1222,7 @@ struct QuickRollEditorView: View {
 struct PlayerView: View {
     @ObservedObject var rollLogger: RollLogger
     @ObservedObject var quickRollManager: QuickRollManager
+    @ObservedObject var soundManager: SoundManager
     
     @State private var selectedGlobalRollType: RollType = .normal
     @State private var customDiceConfigs: [CustomDiceConfig] = {
@@ -1337,6 +1367,9 @@ struct PlayerView: View {
                     ) { baseRoll, finalResult in
                         // Set row selection immediately
                         selectedRowId = config.id
+                        
+                        // Play custom dice roll sound
+                        soundManager.playDiceRollSound()
                         
                         // Show roll animation first
                         showingRollAnimation = true
@@ -1518,7 +1551,8 @@ struct PlayerView: View {
         )
         rollLogger.addRoll(diceRoll)
         
-        // Show animation and result
+        // Play sound and show animation
+        soundManager.playDiceRollSound()
         showingRollAnimation = true
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
@@ -1533,6 +1567,7 @@ struct PlayerView: View {
 struct DungeonMasterView: View {
     @ObservedObject var rollLogger: RollLogger
     @ObservedObject var quickRollManager: QuickRollManager
+    @ObservedObject var soundManager: SoundManager
     
     @State private var customDiceConfigs: [CustomDiceConfig] = {
         var configs: [CustomDiceConfig] = []
@@ -1732,6 +1767,8 @@ struct DungeonMasterView: View {
     }
     
     private func performRoll(for config: CustomDiceConfig, result: Int) {
+        // Play custom dice roll sound
+        soundManager.playDiceRollSound()
         showingRollAnimation = true
         
         // Add to rollLogger
@@ -1793,7 +1830,8 @@ struct DungeonMasterView: View {
         )
         rollLogger.addRoll(diceRoll)
         
-        // Show animation and result
+        // Play custom dice roll sound and show animation
+        soundManager.playDiceRollSound()
         showingRollAnimation = true
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
@@ -1859,6 +1897,9 @@ struct CustomDiceConfig: Identifiable {
     var diceType: DiceType
     var numberOfDice: Int
     var modifier: Int
+    var dropLowest: Int = 0
+    var minMaxModifier: Int = 0 // Range -6 to +6 per dice
+    var useMinimum: Bool = false // true = minimum, false = maximum
 }
 
 struct DungeonMasterDiceRowView: View {
@@ -2204,7 +2245,7 @@ struct DungeonMasterDiceRowView: View {
                                 .shadow(color: .purple.opacity(0.3), radius: 2, x: 0, y: 1)
                             
                             Button(action: {
-                                if config.numberOfDice < 10 {
+                                if config.numberOfDice < 99 {
                                     withAnimation(.easeInOut(duration: 0.1)) {
                                         config.numberOfDice += 1
                                     }
@@ -2231,6 +2272,254 @@ struct DungeonMasterDiceRowView: View {
                             
                             Spacer()
                         }
+                    }
+                    
+                    // Drop Lowest (only show if numberOfDice > 1)
+                    if config.numberOfDice > 1 {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Image(systemName: "arrow.down.circle")
+                                    .foregroundColor(.orange)
+                                    .font(.system(size: 14))
+                                Text("Drop Lowest")
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.orange)
+                            }
+                            
+                            HStack(spacing: 16) {
+                                Button(action: {
+                                    if config.dropLowest > 0 {
+                                        withAnimation(.easeInOut(duration: 0.1)) {
+                                            config.dropLowest -= 1
+                                        }
+                                    }
+                                }) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(
+                                                LinearGradient(
+                                                    gradient: Gradient(colors: [Color.red.opacity(0.8), Color.orange.opacity(0.6)]),
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                )
+                                            )
+                                            .frame(width: 32, height: 32)
+                                            .shadow(color: .red.opacity(0.4), radius: 2, x: 0, y: 1)
+                                        
+                                        Image(systemName: "minus")
+                                            .foregroundColor(.white)
+                                            .font(.system(size: 14, weight: .bold))
+                                    }
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                
+                                Text("\(config.dropLowest)")
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(.black)
+                                    .frame(minWidth: 50)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .fill(Color.white.opacity(0.9))
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 8)
+                                                    .stroke(Color.purple.opacity(0.4), lineWidth: 1)
+                                            )
+                                    )
+                                    .shadow(color: .purple.opacity(0.3), radius: 2, x: 0, y: 1)
+                                
+                                Button(action: {
+                                    if config.dropLowest < config.numberOfDice - 1 {
+                                        withAnimation(.easeInOut(duration: 0.1)) {
+                                            config.dropLowest += 1
+                                        }
+                                    }
+                                }) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(
+                                                LinearGradient(
+                                                    gradient: Gradient(colors: [Color.green.opacity(0.8), Color.blue.opacity(0.6)]),
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                )
+                                            )
+                                            .frame(width: 32, height: 32)
+                                            .shadow(color: .green.opacity(0.4), radius: 2, x: 0, y: 1)
+                                        
+                                        Image(systemName: "plus")
+                                            .foregroundColor(.white)
+                                            .font(.system(size: 14, weight: .bold))
+                                    }
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                
+                                Spacer()
+                            }
+                        }
+                    }
+                    
+                    // Min/Max Modifier
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Image(systemName: "arrow.up.arrow.down")
+                                .foregroundColor(.orange)
+                                .font(.system(size: 14))
+                            Text("Per-Die Modifier")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.orange)
+                        }
+                        
+                        // Min/Max Toggle
+                        HStack(spacing: 16) {
+                            Text("Apply:")
+                                .font(.caption2)
+                                .foregroundColor(.gray)
+                            
+                            Button(action: {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    config.useMinimum = true
+                                }
+                            }) {
+                                Text("Minimum")
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(config.useMinimum ? .black : .white)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .fill(
+                                                config.useMinimum ?
+                                                LinearGradient(colors: [.blue, .cyan], startPoint: .topLeading, endPoint: .bottomTrailing) :
+                                                LinearGradient(colors: [.clear, .clear], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                            )
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 8)
+                                                    .stroke(Color.blue.opacity(0.4), lineWidth: 1)
+                                            )
+                                    )
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            
+                            Button(action: {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    config.useMinimum = false
+                                }
+                            }) {
+                                Text("Maximum")
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(!config.useMinimum ? .black : .white)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .fill(
+                                                !config.useMinimum ?
+                                                LinearGradient(colors: [.green, .teal], startPoint: .topLeading, endPoint: .bottomTrailing) :
+                                                LinearGradient(colors: [.clear, .clear], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                            )
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 8)
+                                                    .stroke(Color.green.opacity(0.4), lineWidth: 1)
+                                            )
+                                    )
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            
+                            Spacer()
+                        }
+                        
+                        // Modifier Value
+                        HStack(spacing: 16) {
+                            Button(action: {
+                                if config.minMaxModifier > -6 {
+                                    withAnimation(.easeInOut(duration: 0.1)) {
+                                        config.minMaxModifier -= 1
+                                    }
+                                }
+                            }) {
+                                ZStack {
+                                    Circle()
+                                        .fill(
+                                            LinearGradient(
+                                                gradient: Gradient(colors: [Color.red.opacity(0.8), Color.orange.opacity(0.6)]),
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                        .frame(width: 32, height: 32)
+                                        .shadow(color: .red.opacity(0.4), radius: 2, x: 0, y: 1)
+                                    
+                                    Image(systemName: "minus")
+                                        .foregroundColor(.white)
+                                        .font(.system(size: 14, weight: .bold))
+                                }
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            
+                            Text("\(config.minMaxModifier >= 0 ? "+" : "")\(config.minMaxModifier)")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(.black)
+                                .frame(minWidth: 50)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(Color.white.opacity(0.9))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .stroke(Color.purple.opacity(0.4), lineWidth: 1)
+                                        )
+                                )
+                                .shadow(color: .purple.opacity(0.3), radius: 2, x: 0, y: 1)
+                            
+                            Button(action: {
+                                if config.minMaxModifier < 6 {
+                                    withAnimation(.easeInOut(duration: 0.1)) {
+                                        config.minMaxModifier += 1
+                                    }
+                                }
+                            }) {
+                                ZStack {
+                                    Circle()
+                                        .fill(
+                                            LinearGradient(
+                                                gradient: Gradient(colors: [Color.green.opacity(0.8), Color.blue.opacity(0.6)]),
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                        .frame(width: 32, height: 32)
+                                        .shadow(color: .green.opacity(0.4), radius: 2, x: 0, y: 1)
+                                    
+                                    Image(systemName: "plus")
+                                        .foregroundColor(.white)
+                                        .font(.system(size: 14, weight: .bold))
+                                }
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            
+                            Spacer()
+                        }
+                        
+                        // Help text
+                        Group {
+                            if config.useMinimum {
+                                let minValue = 1 + config.minMaxModifier
+                                Text("Each die result below \(minValue) becomes \(minValue)")
+                            } else {
+                                let maxValue = config.diceType.sides + config.minMaxModifier
+                                Text("Each die result above \(maxValue) becomes \(maxValue)")
+                            }
+                        }
+                        .font(.caption2)
+                        .foregroundColor(.gray.opacity(0.8))
+                        .italic()
                     }
                     
                 }
@@ -2406,7 +2695,7 @@ struct CustomDiceRowView: View {
                                 )
                             
                             Button(action: {
-                                if config.numberOfDice < 10 {
+                                if config.numberOfDice < 99 {
                                     config.numberOfDice += 1
                                 }
                             }) {
@@ -2448,7 +2737,7 @@ struct CustomDiceRowView: View {
                                 .frame(minWidth: 40)
                             
                             Button(action: {
-                                if config.numberOfDice < 10 {
+                                if config.numberOfDice < 99 {
                                     config.numberOfDice += 1
                                 }
                             }) {
@@ -2764,6 +3053,7 @@ struct UserDetailsView: View {
     let userType: ContentView.UserType
     @StateObject private var rollLogger = RollLogger()
     @StateObject private var quickRollManager = QuickRollManager()
+    @StateObject private var soundManager = SoundManager()
     @State private var selectedTab = 0
     @State private var currentUserType: ContentView.UserType
     
@@ -2777,13 +3067,13 @@ struct UserDetailsView: View {
             // Main Role View with Swipe Navigation
             ZStack {
                 if currentUserType == .player {
-                    PlayerView(rollLogger: rollLogger, quickRollManager: quickRollManager)
+                    PlayerView(rollLogger: rollLogger, quickRollManager: quickRollManager, soundManager: soundManager)
                         .transition(.asymmetric(
                             insertion: .move(edge: .trailing),
                             removal: .move(edge: .leading)
                         ))
                 } else {
-                    DungeonMasterView(rollLogger: rollLogger, quickRollManager: quickRollManager)
+                    DungeonMasterView(rollLogger: rollLogger, quickRollManager: quickRollManager, soundManager: soundManager)
                         .transition(.asymmetric(
                             insertion: .move(edge: .leading),
                             removal: .move(edge: .trailing)
@@ -2841,7 +3131,7 @@ struct UserDetailsView: View {
                 }
                 .tag(1)
             
-            GeneralDiceTabView(rollLogger: rollLogger, quickRollManager: quickRollManager)
+            GeneralDiceTabView(rollLogger: rollLogger, quickRollManager: quickRollManager, soundManager: soundManager)
                 .tabItem {
                     VStack {
                         Image(systemName: selectedTab == 2 ? "dice.fill" : "dice")
@@ -3151,7 +3441,7 @@ struct EnhancedCustomDiceRowView: View {
     @Binding var config: CustomDiceConfig
     let isSelected: Bool
     let onTap: () -> Void
-    let onRoll: (Int, Int) -> Void // baseRoll, finalResult
+    let onRoll: (Int, Int) -> Void 
     
     @State private var isExpanded = false
     
@@ -3159,250 +3449,466 @@ struct EnhancedCustomDiceRowView: View {
         VStack(alignment: .leading, spacing: 8) {
             // Row Header with Name and Roll Button
             HStack {
-                // Expand/Collapse Button
-                Button(action: {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        isExpanded.toggle()
-                    }
-                }) {
-                    Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                        .foregroundColor(.white)
-                        .font(.system(size: 12))
-                        .shadow(color: isSelected ? .red.opacity(0.5) : .clear, radius: 2)
-                }
-                .buttonStyle(PlainButtonStyle())
-                
-                // Name (editable)
-                TextField("Roll Name", text: $config.name)
-                    .textFieldStyle(PlainTextFieldStyle())
-                    .foregroundColor(.white)
-                    .font(.system(size: 16, weight: .medium))
-                    .shadow(color: isSelected ? .red.opacity(0.3) : .clear, radius: 1)
-                
-                Spacer()
-                
-                // Quick Info
-                        VStack(alignment: .trailing, spacing: 2) {
-                            Text("\(config.numberOfDice)\(config.diceType.rawValue)")
-                                .font(.caption)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                            Text("\(config.modifier >= 0 ? "+" : "")\(config.modifier)")
-                                .font(.caption2)
-                                .foregroundColor(.white.opacity(0.9))
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(Color.black.opacity(0.7))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 6)
-                                        .stroke(isSelected ? Color.red.opacity(0.8) : Color.red.opacity(0.4), lineWidth: 1)
-                                )
-                        )
-                
-                // Enhanced Roll Button
-                Button(action: {
-                    // Only roll if not expanded for editing
-                    if !isExpanded {
-                        onTap()
-                        let results: [Int] = (0..<config.numberOfDice).map { _ in Int.random(in: 1...config.diceType.sides) }
-                        let baseTotal = results.reduce(0, +)
-                        let finalResult = baseTotal + config.modifier
-                        onRoll(baseTotal, finalResult)
-                    }
-                }) {
-                    ZStack {
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: isExpanded ? 
-                                        [Color.gray.opacity(0.5), Color.gray.opacity(0.3)] :
-                                        isSelected ? 
-                                            [Color.red.opacity(0.9), Color.orange.opacity(0.8)] :
-                                            [Color.red.opacity(0.7), Color.red.opacity(0.5)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: isSelected ? 24 : 20, height: isSelected ? 24 : 20)
-                            .shadow(color: isExpanded ? .clear : isSelected ? .red.opacity(0.6) : .red.opacity(0.3), radius: isSelected ? 6 : 3)
-                        
-                        Image(systemName: isExpanded ? "gearshape.fill" : "dice.fill")
-                            .foregroundColor(isExpanded ? .gray : .white)
-                            .font(.system(size: isSelected ? 20 : 16, weight: .bold))
-                            .shadow(color: isExpanded ? .clear : .black.opacity(0.3), radius: 1)
-                    }
-                }
-                .disabled(isExpanded)
-                .scaleEffect(isSelected ? 1.2 : 1.0)
-                .animation(.easeInOut(duration: 0.2), value: isSelected)
-                .animation(.easeInOut(duration: 0.2), value: isExpanded)
+                HeaderView(isExpanded: $isExpanded, config: $config, isSelected: isSelected)
+                RollButtonView(isExpanded: $isExpanded, isSelected: isSelected, onTap: onTap, onRoll: onRoll, config: config)
             }
             
             // Expanded Configuration Options
             if isExpanded {
-                VStack(alignment: .leading, spacing: 12) {
-                    Divider()
-                        .background(
-                            LinearGradient(
-                                colors: [Color.clear, Color.red.opacity(0.5), Color.clear],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                    
-                    // Dice Type Selection
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Dice Type")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                        
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 8) {
-                                ForEach(DiceType.allCases, id: \.self) { diceType in
-                                    Button(action: {
-                                        config.diceType = diceType
-                                    }) {
-                                        Text(diceType.rawValue)
-                                            .font(.system(size: 14, weight: .medium))
-                                            .foregroundColor(config.diceType == diceType ? .black : .white)
-                                            .padding(.horizontal, 12)
-                                            .padding(.vertical, 6)
-                                            .background(
-                                                config.diceType == diceType ? 
-                                                    LinearGradient(colors: [.red, .orange], startPoint: .topLeading, endPoint: .bottomTrailing) :
-                                                    LinearGradient(colors: [.blue.opacity(0.3), .purple.opacity(0.3)], startPoint: .topLeading, endPoint: .bottomTrailing)
-                                            )
-                                            .cornerRadius(15)
-                                            .shadow(color: config.diceType == diceType ? .red.opacity(0.4) : .clear, radius: 2)
-                                    }
-                                    .scaleEffect(config.diceType == diceType ? 1.05 : 1.0)
-                                    .animation(.easeInOut(duration: 0.2), value: config.diceType == diceType)
-                                }
-                            }
-                            .padding(.horizontal, 4)
-                        }
-                    }
-                    
-                    // Modifier
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Modifier")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                        
-                        HStack {
-                            Button(action: {
-                                if config.modifier > -10 {
-                                    config.modifier -= 1
-                                }
-                            }) {
-                                Image(systemName: "minus")
-                                    .foregroundColor(.white)
-                                    .padding(8)
-                                    .background(Color.red.opacity(0.7))
-                                    .clipShape(Circle())
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                            
-                            Text("\(config.modifier >= 0 ? "+" : "")\(config.modifier)")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.white)
-                                .frame(minWidth: 40)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 6)
-                                        .fill(Color.black.opacity(0.3))
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 6)
-                                                .stroke(Color.red.opacity(0.4), lineWidth: 1)
-                                        )
-                                )
-                            
-                            Button(action: {
-                                if config.modifier < 10 {
-                                    config.modifier += 1
-                                }
-                            }) {
-                                Image(systemName: "plus")
-                                    .foregroundColor(.white)
-                                    .padding(8)
-                                    .background(Color.green.opacity(0.7))
-                                    .clipShape(Circle())
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                            
-                            Spacer()
-                        }
-                    }
-                    
-                    // Number of Dice
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Image(systemName: "dice")
-                                .foregroundColor(.orange)
-                                .font(.system(size: 14))
-                            Text("Number of Dice")
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.orange)
-                        }
-                        
-                        HStack {
-                            Button(action: {
-                                if config.numberOfDice > 1 {
-                                    config.numberOfDice -= 1
-                                }
-                            }) {
-                                Image(systemName: "minus")
-                                    .foregroundColor(.white)
-                                    .padding(8)
-                                    .background(Color.red.opacity(0.7))
-                                    .clipShape(Circle())
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                            
-                            Text("\(config.numberOfDice)")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.white)
-                                .frame(minWidth: 40)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 6)
-                                        .fill(Color.black.opacity(0.3))
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 6)
-                                                .stroke(Color.red.opacity(0.4), lineWidth: 1)
-                                        )
-                                )
-                            
-                            Button(action: {
-                                if config.numberOfDice < 10 {
-                                    config.numberOfDice += 1
-                                }
-                            }) {
-                                Image(systemName: "plus")
-                                    .foregroundColor(.white)
-                                    .padding(8)
-                                    .background(Color.green.opacity(0.7))
-                                    .clipShape(Circle())
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                            
-                            Spacer()
-                        }
-                    }
-                    
-                }
-                .padding(.leading, 20)
-                .transition(.opacity.combined(with: .move(edge: .top)))
+                ExpandedOptionsView(config: $config)
             }
         }
         .padding(.vertical, 8)
         .animation(.easeInOut(duration: 0.2), value: isSelected)
+    }
+}
+
+struct HeaderView: View {
+    @Binding var isExpanded: Bool
+    @Binding var config: CustomDiceConfig
+    let isSelected: Bool
+
+    var body: some View {
+        HStack {
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    isExpanded.toggle()
+                }
+            }) {
+                Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                    .foregroundColor(.white)
+                    .font(.system(size: 12))
+                    .shadow(color: isSelected ? .red.opacity(0.5) : .clear, radius: 2)
+            }
+            .buttonStyle(PlainButtonStyle())
+            
+            TextField("Roll Name", text: $config.name)
+                .textFieldStyle(PlainTextFieldStyle())
+                .foregroundColor(.white)
+                .font(.system(size: 16, weight: .medium))
+                .shadow(color: isSelected ? .red.opacity(0.3) : .clear, radius: 1)
+            
+            Spacer()
+            
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("\(config.numberOfDice)\(config.diceType.rawValue)")
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white)
+                Text("\(config.modifier >= 0 ? "+" : "")\(config.modifier)")
+                    .font(.caption2)
+                    .foregroundColor(.white.opacity(0.9))
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.black.opacity(0.7))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(isSelected ? Color.red.opacity(0.8) : Color.red.opacity(0.4), lineWidth: 1)
+                    )
+            )
+        }
+    }
+}
+
+struct RollButtonView: View {
+    @Binding var isExpanded: Bool
+    let isSelected: Bool
+    let onTap: () -> Void
+    let onRoll: (Int, Int) -> Void
+    let config: CustomDiceConfig
+
+    var body: some View {
+        Button(action: {
+            if !isExpanded {
+                onTap()
+                let results: [Int] = (0..<config.numberOfDice).map { _ in Int.random(in: 1...config.diceType.sides) }
+                let baseTotal = results.reduce(0, +)
+                let finalResult = baseTotal + config.modifier
+                onRoll(baseTotal, finalResult)
+            }
+        }) {
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: isExpanded ? 
+                                [Color.gray.opacity(0.5), Color.gray.opacity(0.3)] :
+                                isSelected ? 
+                                    [Color.red.opacity(0.9), Color.orange.opacity(0.8)] :
+                                    [Color.red.opacity(0.7), Color.red.opacity(0.5)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: isSelected ? 24 : 20, height: isSelected ? 24 : 20)
+                    .shadow(color: isExpanded ? .clear : isSelected ? .red.opacity(0.6) : .red.opacity(0.3), radius: isSelected ? 6 : 3)
+
+                Image(systemName: isExpanded ? "gearshape.fill" : "dice.fill")
+                    .foregroundColor(isExpanded ? .gray : .white)
+                    .font(.system(size: isSelected ? 20 : 16, weight: .bold))
+                    .shadow(color: isExpanded ? .clear : .black.opacity(0.3), radius: 1)
+            }
+        }
+        .disabled(isExpanded)
+        .scaleEffect(isSelected ? 1.2 : 1.0)
+        .animation(.easeInOut(duration: 0.2), value: isSelected)
+        .animation(.easeInOut(duration: 0.2), value: isExpanded)
+    }
+}
+
+struct ExpandedOptionsView: View {
+    @Binding var config: CustomDiceConfig
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Divider()
+                .background(
+                    LinearGradient(
+                        colors: [Color.clear, Color.red.opacity(0.5), Color.clear],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Dice Type")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(DiceType.allCases, id: \.self) { diceType in
+                            Button(action: {
+                                config.diceType = diceType
+                            }) {
+                                Text(diceType.rawValue)
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(config.diceType == diceType ? .black : .white)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(
+                                        config.diceType == diceType ? 
+                                            LinearGradient(colors: [.red, .orange], startPoint: .topLeading, endPoint: .bottomTrailing) :
+                                            LinearGradient(colors: [.blue.opacity(0.3), .purple.opacity(0.3)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                    )
+                                    .cornerRadius(15)
+                                    .shadow(color: config.diceType == diceType ? .red.opacity(0.4) : .clear, radius: 2)
+                            }
+                            .scaleEffect(config.diceType == diceType ? 1.05 : 1.0)
+                            .animation(.easeInOut(duration: 0.2), value: config.diceType == diceType)
+                        }
+                    }
+                    .padding(.horizontal, 4)
+                }
+            }
+
+            // Modifier
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Modifier")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+
+                HStack {
+                    Button(action: {
+                        if config.modifier > -10 {
+                            config.modifier -= 1
+                        }
+                    }) {
+                        Image(systemName: "minus")
+                            .foregroundColor(.white)
+                            .padding(8)
+                            .background(Color.red.opacity(0.7))
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(PlainButtonStyle())
+
+                    Text("\(config.modifier >= 0 ? "+" : "")\(config.modifier)")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white)
+                        .frame(minWidth: 40)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Color.black.opacity(0.3))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .stroke(Color.red.opacity(0.4), lineWidth: 1)
+                                )
+                        )
+
+                    Button(action: {
+                        if config.modifier < 10 {
+                            config.modifier += 1
+                        }
+                    }) {
+                        Image(systemName: "plus")
+                            .foregroundColor(.white)
+                            .padding(8)
+                            .background(Color.green.opacity(0.7))
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(PlainButtonStyle())
+
+                    Spacer()
+                }
+            }
+
+            // Number of Dice
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Image(systemName: "dice")
+                        .foregroundColor(.orange)
+                        .font(.system(size: 14))
+                    Text("Number of Dice")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.orange)
+                }
+
+                HStack {
+                    Button(action: {
+                        if config.numberOfDice > 1 {
+                            config.numberOfDice -= 1
+                            if config.dropLowest >= config.numberOfDice {
+                                config.dropLowest = max(0, config.numberOfDice - 1)
+                            }
+                        }
+                    }) {
+                        Image(systemName: "minus")
+                            .foregroundColor(.white)
+                            .padding(8)
+                            .background(Color.red.opacity(0.7))
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(PlainButtonStyle())
+
+                    Text("\(config.numberOfDice)")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white)
+                        .frame(minWidth: 40)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Color.black.opacity(0.3))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .stroke(Color.red.opacity(0.4), lineWidth: 1)
+                                )
+                        )
+
+                    Button(action: {
+                        if config.numberOfDice < 99 {
+                            config.numberOfDice += 1
+                        }
+                    }) {
+                        Image(systemName: "plus")
+                            .foregroundColor(.white)
+                            .padding(8)
+                            .background(Color.green.opacity(0.7))
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(PlainButtonStyle())
+
+                    Spacer()
+                }
+            }
+
+            // Drop Lowest (only show if numberOfDice > 1)
+            if config.numberOfDice > 1 {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Image(systemName: "arrow.down.circle")
+                            .foregroundColor(.orange)
+                            .font(.system(size: 14))
+                        Text("Drop Lowest")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.orange)
+                    }
+
+                    HStack {
+                        Button(action: {
+                            if config.dropLowest > 0 {
+                                config.dropLowest -= 1
+                            }
+                        }) {
+                            Image(systemName: "minus")
+                                .foregroundColor(.white)
+                                .padding(8)
+                                .background(Color.red.opacity(0.7))
+                                .clipShape(Circle())
+                        }
+                        .buttonStyle(PlainButtonStyle())
+
+                        Text("\(config.dropLowest)")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white)
+                            .frame(minWidth: 40)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(Color.black.opacity(0.3))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .stroke(Color.red.opacity(0.4), lineWidth: 1)
+                                    )
+                            )
+
+                        Button(action: {
+                            if config.dropLowest < config.numberOfDice - 1 {
+                                config.dropLowest += 1
+                            }
+                        }) {
+                            Image(systemName: "plus")
+                                .foregroundColor(.white)
+                                .padding(8)
+                                .background(Color.green.opacity(0.7))
+                                .clipShape(Circle())
+                        }
+                        .buttonStyle(PlainButtonStyle())
+
+                        Spacer()
+                    }
+                }
+            }
+
+            // Min/Max Modifier
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Image(systemName: "arrow.up.arrow.down")
+                        .foregroundColor(.orange)
+                        .font(.system(size: 14))
+                    Text("Per-Die Modifier")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.orange)
+                }
+
+                // Min/Max Toggle
+                HStack {
+                    Text("Apply:")
+                        .font(.caption2)
+                        .foregroundColor(.gray)
+
+                    Button(action: {
+                        config.useMinimum = true
+                    }) {
+                        Text("Minimum")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundColor(config.useMinimum ? .black : .white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(
+                                        config.useMinimum ?
+                                        LinearGradient(colors: [.blue, .cyan], startPoint: .topLeading, endPoint: .bottomTrailing) :
+                                        LinearGradient(colors: [.clear, .clear], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(Color.blue.opacity(0.4), lineWidth: 1)
+                                    )
+                            )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+
+                    Button(action: {
+                        config.useMinimum = false
+                    }) {
+                        Text("Maximum")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundColor(!config.useMinimum ? .black : .white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(
+                                        !config.useMinimum ?
+                                        LinearGradient(colors: [.green, .teal], startPoint: .topLeading, endPoint: .bottomTrailing) :
+                                        LinearGradient(colors: [.clear, .clear], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(Color.green.opacity(0.4), lineWidth: 1)
+                                    )
+                            )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+
+                    Spacer()
+                }
+
+                // Modifier Value
+                HStack {
+                    Button(action: {
+                        if config.minMaxModifier > -6 {
+                            config.minMaxModifier -= 1
+                        }
+                    }) {
+                        Image(systemName: "minus")
+                            .foregroundColor(.white)
+                            .padding(8)
+                            .background(Color.red.opacity(0.7))
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(PlainButtonStyle())
+
+                    Text("\(config.minMaxModifier >= 0 ? "+" : "")\(config.minMaxModifier)")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white)
+                        .frame(minWidth: 50)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Color.black.opacity(0.3))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .stroke(Color.red.opacity(0.4), lineWidth: 1)
+                                )
+                        )
+
+                    Button(action: {
+                        if config.minMaxModifier < 6 {
+                            config.minMaxModifier += 1
+                        }
+                    }) {
+                        Image(systemName: "plus")
+                            .foregroundColor(.white)
+                            .padding(8)
+                            .background(Color.green.opacity(0.7))
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(PlainButtonStyle())
+
+                    Spacer()
+                }
+
+                // Help text
+                Group {
+                    if config.useMinimum {
+                        let minValue = 1 - config.minMaxModifier
+                        Text("Each die result below \(minValue) becomes \(minValue)")
+                    } else {
+                        let maxValue = config.diceType.sides + config.minMaxModifier
+                        Text("Each die result above \(maxValue) becomes \(maxValue)")
+                    }
+                }
+                .font(.caption2)
+                .foregroundColor(.gray.opacity(0.8))
+                .italic()
+            }
+        }
+        .padding(.leading, 20)
+        .transition(.opacity.combined(with: .move(edge: .top)))
     }
 }
 
@@ -3638,7 +4144,7 @@ struct DiceSetupView: View {
                         HStack {
                             Text("Number of Dice:")
                             Spacer()
-                            Stepper("\(config.numberOfDice)", value: $config.numberOfDice, in: 1...10)
+                            Stepper("\(config.numberOfDice)", value: $config.numberOfDice, in: 1...99)
                         }
                     }
                     .padding(.vertical, 4)
