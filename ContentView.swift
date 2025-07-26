@@ -1225,6 +1225,7 @@ struct PlayerView: View {
     @ObservedObject var soundManager: SoundManager
     
     @State private var selectedGlobalRollType: RollType = .normal
+    @State private var isEditMode = false
     @State private var customDiceConfigs: [CustomDiceConfig] = {
         var configs: [CustomDiceConfig] = []
         for i in 1...5 {
@@ -1337,6 +1338,29 @@ struct PlayerView: View {
                     .fontWeight(.bold)
                     .foregroundColor(.red)
                 Spacer()
+                if customDiceConfigs.count > 1 {
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            isEditMode.toggle()
+                        }
+                    }) {
+                        Text(isEditMode ? "Done" : "Edit")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(isEditMode ? .blue : .orange)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 4)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(isEditMode ? Color.blue.opacity(0.2) : Color.orange.opacity(0.2))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(isEditMode ? Color.blue.opacity(0.4) : Color.orange.opacity(0.4), lineWidth: 1)
+                                    )
+                            )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
                 Button(action: addHeroRoll) {
                     Image(systemName: "plus.circle.fill")
                         .font(.title2)
@@ -1354,13 +1378,15 @@ struct PlayerView: View {
                         config: $config,
                         isSelected: selectedRowId == config.id,
                         onTap: {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                selectedRowId = config.id
-                            }
-                            // Clear selection after 0.5 seconds
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            if !isEditMode {
                                 withAnimation(.easeInOut(duration: 0.2)) {
-                                    selectedRowId = nil
+                                    selectedRowId = config.id
+                                }
+                                // Clear selection after 0.5 seconds
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        selectedRowId = nil
+                                    }
                                 }
                             }
                         }
@@ -1439,11 +1465,12 @@ struct PlayerView: View {
                     .scaleEffect(selectedRowId == config.id ? 1.02 : 1.0)
                     .animation(.easeInOut(duration: 0.2), value: selectedRowId == config.id)
                 }
-                .onDelete(perform: deleteHeroRoll)
-                .onMove(perform: moveHeroRoll)
+                .onDelete(perform: isEditMode ? deleteHeroRoll : nil)
+                .onMove(perform: isEditMode ? moveHeroRoll : nil)
             }
             .listStyle(PlainListStyle())
             .background(Color.clear)
+            .environment(\.editMode, .constant(isEditMode ? EditMode.active : EditMode.inactive))
             
         }
         .background(
@@ -1833,7 +1860,30 @@ struct DungeonMasterView: View {
         var rerolledRolls: [Int] = []
         var droppedRolls: [Int] = []
         
-        // Initial rolls
+        // Handle advantage/disadvantage mode for d20
+        if config.advantageMode && config.diceType == .d20 {
+            // Roll 2d20 for advantage/disadvantage
+            let roll1 = Int.random(in: 1...20)
+            let roll2 = Int.random(in: 1...20)
+            allRolls = [roll1, roll2]
+            
+            let finalRoll = config.useAdvantage ? max(roll1, roll2) : min(roll1, roll2)
+            let unusedRoll = config.useAdvantage ? min(roll1, roll2) : max(roll1, roll2)
+            
+            let baseTotal = finalRoll
+            let finalResult = baseTotal + config.modifier
+            
+            return RollResults(
+                allRolls: allRolls,
+                usedRolls: [finalRoll],
+                droppedRolls: [unusedRoll],
+                rerolledRolls: [],
+                baseTotal: baseTotal,
+                finalResult: finalResult
+            )
+        }
+        
+        // Initial rolls (normal mode)
         var currentRolls = (0..<config.numberOfDice).map { _ in Int.random(in: 1...config.diceType.sides) }
         allRolls.append(contentsOf: currentRolls)
         
@@ -2140,11 +2190,8 @@ struct DungeonMasterDiceRowView: View {
                             isSelected = true
                         }
                         
-                        // Roll multiple dice if numberOfDice > 1
-                        let results: [Int] = (0..<config.numberOfDice).map { _ in Int.random(in: 1...config.diceType.sides) }
-                        let baseTotal = results.reduce(0, +)
-                        let finalResult = baseTotal + config.modifier
-                        onRoll(finalResult)
+                        // Call the roll function (logic handled in DungeonMasterView)
+                        onRoll()
                         
                         // Clear selection after brief delay
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
@@ -2346,26 +2393,27 @@ struct DungeonMasterDiceRowView: View {
                         }
                     }
                     
-                    // Number of Dice (for Dungeon Master)
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Image(systemName: "dice")
-                                .foregroundColor(.orange)
-                                .font(.system(size: 14))
-                            Text("Number of Dice")
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.orange)
-                        }
-                        
-                        HStack(spacing: 16) {
-                            Button(action: {
-                                if config.numberOfDice > 1 {
-                                    withAnimation(.easeInOut(duration: 0.1)) {
-                                        config.numberOfDice -= 1
+                    // Number of Dice (for Dungeon Master) - Hide when advantage mode is enabled
+                    if !config.advantageMode {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Image(systemName: "dice")
+                                    .foregroundColor(.orange)
+                                    .font(.system(size: 14))
+                                Text("Number of Dice")
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.orange)
+                            }
+                            
+                            HStack(spacing: 16) {
+                                Button(action: {
+                                    if config.numberOfDice > 1 {
+                                        withAnimation(.easeInOut(duration: 0.1)) {
+                                            config.numberOfDice -= 1
+                                        }
                                     }
-                                }
-                            }) {
+                                }) {
                                 ZStack {
                                     Circle()
                                         .fill(
@@ -2430,20 +2478,145 @@ struct DungeonMasterDiceRowView: View {
                             Spacer()
                         }
                     }
+                }
                     
-                    // Drop Lowest (only show if numberOfDice > 1)
+                    // Drop vs Reroll (only show if numberOfDice > 1)
                     if config.numberOfDice > 1 {
                         VStack(alignment: .leading, spacing: 8) {
+                            // Drop vs Reroll Toggle
                             HStack {
-                                Image(systemName: "arrow.down.circle")
+                                Image(systemName: config.useRerollInsteadOfDrop ? "arrow.clockwise.circle" : "arrow.down.circle")
                                     .foregroundColor(.orange)
                                     .font(.system(size: 14))
-                                Text("Drop Lowest")
+                                Text("Dice Management")
                                     .font(.caption)
                                     .fontWeight(.semibold)
                                     .foregroundColor(.orange)
                             }
                             
+                            // Action type toggle
+                            HStack(spacing: 16) {
+                                Text("Action:")
+                                    .font(.caption2)
+                                    .foregroundColor(.gray)
+                                
+                                Button(action: {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        config.useRerollInsteadOfDrop = false
+                                    }
+                                }) {
+                                    Text("Drop")
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(!config.useRerollInsteadOfDrop ? .black : .white)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .fill(
+                                                    !config.useRerollInsteadOfDrop ?
+                                                    LinearGradient(colors: [.red, .orange], startPoint: .topLeading, endPoint: .bottomTrailing) :
+                                                    LinearGradient(colors: [.clear, .clear], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                                )
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 8)
+                                                        .stroke(Color.red.opacity(0.4), lineWidth: 1)
+                                                )
+                                        )
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                
+                                Button(action: {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        config.useRerollInsteadOfDrop = true
+                                    }
+                                }) {
+                                    Text("Reroll")
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(config.useRerollInsteadOfDrop ? .black : .white)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .fill(
+                                                    config.useRerollInsteadOfDrop ?
+                                                    LinearGradient(colors: [.blue, .cyan], startPoint: .topLeading, endPoint: .bottomTrailing) :
+                                                    LinearGradient(colors: [.clear, .clear], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                                )
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 8)
+                                                        .stroke(Color.blue.opacity(0.4), lineWidth: 1)
+                                                )
+                                        )
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                
+                                Spacer()
+                            }
+                            
+                            // High vs Low toggle
+                            HStack(spacing: 16) {
+                                Text("Target:")
+                                    .font(.caption2)
+                                    .foregroundColor(.gray)
+                                
+                                Button(action: {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        config.dropHighestInsteadOfLowest = false
+                                    }
+                                }) {
+                                    Text("Lowest")
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(!config.dropHighestInsteadOfLowest ? .black : .white)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .fill(
+                                                    !config.dropHighestInsteadOfLowest ?
+                                                    LinearGradient(colors: [.green, .teal], startPoint: .topLeading, endPoint: .bottomTrailing) :
+                                                    LinearGradient(colors: [.clear, .clear], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                                )
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 8)
+                                                        .stroke(Color.green.opacity(0.4), lineWidth: 1)
+                                                )
+                                        )
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                
+                                Button(action: {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        config.dropHighestInsteadOfLowest = true
+                                    }
+                                }) {
+                                    Text("Highest")
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(config.dropHighestInsteadOfLowest ? .black : .white)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .fill(
+                                                    config.dropHighestInsteadOfLowest ?
+                                                    LinearGradient(colors: [.purple, .pink], startPoint: .topLeading, endPoint: .bottomTrailing) :
+                                                    LinearGradient(colors: [.clear, .clear], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                                )
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 8)
+                                                        .stroke(Color.purple.opacity(0.4), lineWidth: 1)
+                                                )
+                                        )
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                
+                                Spacer()
+                            }
+                            
+                            // Number selector
                             HStack(spacing: 16) {
                                 Button(action: {
                                     if config.dropLowest > 0 {
@@ -2514,6 +2687,148 @@ struct DungeonMasterDiceRowView: View {
                                 .buttonStyle(PlainButtonStyle())
                                 
                                 Spacer()
+                            }
+                            
+                            // Help text
+                            Group {
+                                if config.useRerollInsteadOfDrop {
+                                    Text("Reroll the \(config.dropLowest) \(config.dropHighestInsteadOfLowest ? "highest" : "lowest") dice")
+                                } else {
+                                    Text("Drop the \(config.dropLowest) \(config.dropHighestInsteadOfLowest ? "highest" : "lowest") dice")
+                                }
+                            }
+                            .font(.caption2)
+                            .foregroundColor(.gray.opacity(0.8))
+                            .italic()
+                        }
+                    }
+                    
+                    // Advantage/Disadvantage Toggle (only show for d20)
+                    if config.diceType == .d20 {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Image(systemName: "dice.fill")
+                                    .foregroundColor(.orange)
+                                    .font(.system(size: 14))
+                                Text("Advantage/Disadvantage")
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.orange)
+                            }
+                            
+                            // Enable/Disable Toggle
+                            HStack(spacing: 16) {
+                                Button(action: {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        config.advantageMode.toggle()
+                                        if config.advantageMode {
+                                            // When enabling advantage mode, set to 2 dice
+                                            config.numberOfDice = 2
+                                        } else {
+                                            // When disabling, reset to 1 die
+                                            config.numberOfDice = 1
+                                        }
+                                    }
+                                }) {
+                                    HStack {
+                                        Image(systemName: config.advantageMode ? "checkmark.circle.fill" : "circle")
+                                            .foregroundColor(config.advantageMode ? .green : .gray)
+                                        Text("Enable Adv/Disadv")
+                                            .font(.caption)
+                                            .fontWeight(.semibold)
+                                            .foregroundColor(config.advantageMode ? .black : .white)
+                                    }
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .fill(
+                                                config.advantageMode ?
+                                                LinearGradient(colors: [.green.opacity(0.8), .blue.opacity(0.6)], startPoint: .topLeading, endPoint: .bottomTrailing) :
+                                                LinearGradient(colors: [.gray.opacity(0.3), .gray.opacity(0.2)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                            )
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 8)
+                                                    .stroke(config.advantageMode ? Color.green.opacity(0.6) : Color.gray.opacity(0.4), lineWidth: 1)
+                                            )
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                
+                                Spacer()
+                            }
+                            
+                            // Advantage/Disadvantage Selection (only show when enabled)
+                            if config.advantageMode {
+                                HStack(spacing: 16) {
+                                    Button(action: {
+                                        withAnimation(.easeInOut(duration: 0.2)) {
+                                            config.useAdvantage = true
+                                        }
+                                    }) {
+                                        HStack {
+                                            Image(systemName: "arrow.up.circle.fill")
+                                                .foregroundColor(config.useAdvantage ? .green : .gray)
+                                            Text("Advantage")
+                                                .font(.caption)
+                                                .fontWeight(.semibold)
+                                                .foregroundColor(config.useAdvantage ? .black : .white)
+                                        }
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .fill(
+                                                    config.useAdvantage ?
+                                                    LinearGradient(colors: [.green, .mint], startPoint: .topLeading, endPoint: .bottomTrailing) :
+                                                    LinearGradient(colors: [.clear, .clear], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                                )
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 8)
+                                                        .stroke(Color.green.opacity(0.4), lineWidth: 1)
+                                                )
+                                        )
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                    
+                                    Button(action: {
+                                        withAnimation(.easeInOut(duration: 0.2)) {
+                                            config.useAdvantage = false
+                                        }
+                                    }) {
+                                        HStack {
+                                            Image(systemName: "arrow.down.circle.fill")
+                                                .foregroundColor(!config.useAdvantage ? .red : .gray)
+                                            Text("Disadvantage")
+                                                .font(.caption)
+                                                .fontWeight(.semibold)
+                                                .foregroundColor(!config.useAdvantage ? .black : .white)
+                                        }
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .fill(
+                                                    !config.useAdvantage ?
+                                                    LinearGradient(colors: [.red, .orange], startPoint: .topLeading, endPoint: .bottomTrailing) :
+                                                    LinearGradient(colors: [.clear, .clear], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                                )
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 8)
+                                                        .stroke(Color.red.opacity(0.4), lineWidth: 1)
+                                                )
+                                        )
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                    
+                                    Spacer()
+                                }
+                                
+                                // Help text for advantage/disadvantage
+                                Text(config.useAdvantage ? "Roll 2d20, keep the higher result" : "Roll 2d20, keep the lower result")
+                                    .font(.caption2)
+                                    .foregroundColor(.gray.opacity(0.8))
+                                    .italic()
                             }
                         }
                     }
@@ -3241,12 +3556,17 @@ struct UserDetailsView: View {
                 DragGesture()
                     .onEnded { gesture in
                         withAnimation(.easeInOut(duration: 0.3)) {
-                if gesture.translation.width > 100 {
+                            if gesture.translation.width > 100 {
                                 // Swipe right - go to Player
                                 currentUserType = .player
                             } else if gesture.translation.width < -100 {
-                                // Swipe left - go to Dungeon Master
-                                currentUserType = .dungeonMaster
+                                // Swipe left - go to Dungeon Master or next tab
+                                if currentUserType == .player {
+                                    currentUserType = .dungeonMaster
+                                } else {
+                                    // If already DM, go to Chronicle
+                                    selectedTab = 1
+                                }
                             }
                         }
                     }
@@ -3270,6 +3590,20 @@ struct UserDetailsView: View {
             .tag(0)
             
             LogView(rollLogger: rollLogger)
+                .gesture(
+                    DragGesture()
+                        .onEnded { gesture in
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                if gesture.translation.width > 100 {
+                                    // Swipe right - go back to Player/DM
+                                    selectedTab = 0
+                                } else if gesture.translation.width < -100 {
+                                    // Swipe left - go to General Dice
+                                    selectedTab = 2
+                                }
+                            }
+                        }
+                )
                 .tabItem {
                     VStack {
                         Image(systemName: selectedTab == 1 ? "scroll.fill" : "scroll")
@@ -3289,6 +3623,17 @@ struct UserDetailsView: View {
                 .tag(1)
             
             GeneralDiceTabView(rollLogger: rollLogger, quickRollManager: quickRollManager, soundManager: soundManager)
+                .gesture(
+                    DragGesture()
+                        .onEnded { gesture in
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                if gesture.translation.width > 100 {
+                                    // Swipe right - go back to Chronicle
+                                    selectedTab = 1
+                                }
+                            }
+                        }
+                )
                 .tabItem {
                     VStack {
                         Image(systemName: selectedTab == 2 ? "dice.fill" : "dice")
@@ -4067,47 +4412,135 @@ struct ExpandedOptionsView: View {
                     .font(.caption2)
                     .foregroundColor(.gray.opacity(0.8))
                     .italic()
+                }
+            }
+            
+            // Advantage/Disadvantage Toggle (only show for d20)
+            if config.diceType == .d20 {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Image(systemName: "dice.fill")
+                            .foregroundColor(.orange)
+                            .font(.system(size: 14))
+                        Text("Advantage/Disadvantage")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.orange)
+                    }
                     
-                    // Advantage/Disadvantage shortcut for d20
-                    if config.diceType == .d20 && config.numberOfDice == 2 {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("D&D 5e Shortcuts:")
-                                .font(.caption2)
-                                .foregroundColor(.yellow)
-                                .fontWeight(.semibold)
-                            
-                            HStack(spacing: 8) {
-                                Button("Advantage") {
-                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                        config.useRerollInsteadOfDrop = false
-                                        config.dropHighestInsteadOfLowest = false
-                                        config.dropLowest = 1
-                                    }
+                    // Enable/Disable Toggle
+                    HStack(spacing: 16) {
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                config.advantageMode.toggle()
+                                if config.advantageMode {
+                                    // When enabling advantage mode, set to 2 dice
+                                    config.numberOfDice = 2
+                                } else {
+                                    // When disabling, reset to 1 die
+                                    config.numberOfDice = 1
                                 }
-                                .font(.caption2)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(Color.green.opacity(0.3))
-                                .foregroundColor(.white)
-                                .cornerRadius(6)
-                                
-                                Button("Disadvantage") {
-                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                        config.useRerollInsteadOfDrop = false
-                                        config.dropHighestInsteadOfLowest = true
-                                        config.dropLowest = 1
-                                    }
-                                }
-                                .font(.caption2)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(Color.red.opacity(0.3))
-                                .foregroundColor(.white)
-                                .cornerRadius(6)
-                                
-                                Spacer()
                             }
+                        }) {
+                            HStack {
+                                Image(systemName: config.advantageMode ? "checkmark.circle.fill" : "circle")
+                                    .foregroundColor(config.advantageMode ? .green : .gray)
+                                Text("Enable Adv/Disadv")
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(config.advantageMode ? .black : .white)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(
+                                        config.advantageMode ?
+                                        LinearGradient(colors: [.green.opacity(0.8), .blue.opacity(0.6)], startPoint: .topLeading, endPoint: .bottomTrailing) :
+                                        LinearGradient(colors: [.gray.opacity(0.3), .gray.opacity(0.2)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(config.advantageMode ? Color.green.opacity(0.6) : Color.gray.opacity(0.4), lineWidth: 1)
+                                    )
+                            )
                         }
+                        .buttonStyle(PlainButtonStyle())
+                        
+                        Spacer()
+                    }
+                    
+                    // Advantage/Disadvantage Selection (only show when enabled)
+                    if config.advantageMode {
+                        HStack(spacing: 16) {
+                            Button(action: {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    config.useAdvantage = true
+                                }
+                            }) {
+                                HStack {
+                                    Image(systemName: "arrow.up.circle.fill")
+                                        .foregroundColor(config.useAdvantage ? .green : .gray)
+                                    Text("Advantage")
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(config.useAdvantage ? .black : .white)
+                                }
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(
+                                            config.useAdvantage ?
+                                            LinearGradient(colors: [.green, .mint], startPoint: .topLeading, endPoint: .bottomTrailing) :
+                                            LinearGradient(colors: [.clear, .clear], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .stroke(Color.green.opacity(0.4), lineWidth: 1)
+                                        )
+                                )
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            
+                            Button(action: {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    config.useAdvantage = false
+                                }
+                            }) {
+                                HStack {
+                                    Image(systemName: "arrow.down.circle.fill")
+                                        .foregroundColor(!config.useAdvantage ? .red : .gray)
+                                    Text("Disadvantage")
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(!config.useAdvantage ? .black : .white)
+                                }
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(
+                                            !config.useAdvantage ?
+                                            LinearGradient(colors: [.red, .orange], startPoint: .topLeading, endPoint: .bottomTrailing) :
+                                            LinearGradient(colors: [.clear, .clear], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .stroke(Color.red.opacity(0.4), lineWidth: 1)
+                                        )
+                                )
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            
+                            Spacer()
+                        }
+                        
+                        // Help text for advantage/disadvantage
+                        Text(config.useAdvantage ? "Roll 2d20, keep the higher result" : "Roll 2d20, keep the lower result")
+                            .font(.caption2)
+                            .foregroundColor(.gray.opacity(0.8))
+                            .italic()
                     }
                 }
             }
@@ -4534,7 +4967,30 @@ struct PlayerDiceRowView: View {
         var rerolledRolls: [Int] = []
         var droppedRolls: [Int] = []
         
-        // Initial rolls
+        // Handle advantage/disadvantage mode for d20
+        if config.advantageMode && config.diceType == .d20 {
+            // Roll 2d20 for advantage/disadvantage
+            let roll1 = Int.random(in: 1...20)
+            let roll2 = Int.random(in: 1...20)
+            allRolls = [roll1, roll2]
+            
+            let finalRoll = config.useAdvantage ? max(roll1, roll2) : min(roll1, roll2)
+            let unusedRoll = config.useAdvantage ? min(roll1, roll2) : max(roll1, roll2)
+            
+            let baseTotal = finalRoll
+            let finalResult = baseTotal + config.modifier
+            
+            return RollResults(
+                allRolls: allRolls,
+                usedRolls: [finalRoll],
+                droppedRolls: [unusedRoll],
+                rerolledRolls: [],
+                baseTotal: baseTotal,
+                finalResult: finalResult
+            )
+        }
+        
+        // Initial rolls (normal mode)
         var currentRolls = (0..<config.numberOfDice).map { _ in Int.random(in: 1...config.diceType.sides) }
         allRolls.append(contentsOf: currentRolls)
         
